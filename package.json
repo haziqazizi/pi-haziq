@@ -73,10 +73,14 @@
     "smoke": "node test/package-smoke.mjs",
     "smoke:trust": "node test/trust-smoke.mjs",
     "smoke:production": "test/production-package-smoke.sh",
+    "audit:production": "node scripts/audit-production.mjs",
     "verify": "npm run check && npm test && npm run smoke && npm run smoke:trust",
-    "verify:full": "npm run verify && npm run smoke:production"
+    "verify:full": "npm run verify && npm run smoke:production && npm run audit:production"
   },
   "engines": {
     "node": ">=22.19.0"
+  },
+  "overrides": {
+    "@hono/node-server": "1.19.15"
   }
 }

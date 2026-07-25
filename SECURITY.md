@@ -16,6 +16,8 @@ Report vulnerabilities privately to the repository owner. Do not include credent
 - Project MCP and service-tier configuration is ignored until Pi marks the project trusted. Global user configuration remains available.
 - Herdr remains optional and owns its managed Pi transport integration.
 
-## Known transitive advisory
+## Transitive advisory verification
 
-`npm audit --omit=dev` currently reports `GHSA-frvp-7c67-39w9` through `pi-mcp-adapter` → `@modelcontextprotocol/sdk` → `@hono/node-server@1.x`. The advisory concerns Windows encoded-backslash path traversal in Hono's static-file adapter. This package does not invoke that static-file adapter, and the deployed development host is Linux. The fixed Hono release is a new major outside the MCP SDK's declared range, so this package does not force an unsupported override. Re-evaluate when the MCP SDK updates its dependency range.
+GitHub's authoritative record for `GHSA-frvp-7c67-39w9` defines two vulnerable ranges for `@hono/node-server`: `<1.19.15` and `>=2.0.0 <2.0.5`. Release `1.19.15` is the patched 1.x backport and remains compatible with the MCP SDK's declared `^1.19.9` range.
+
+This package pins `@hono/node-server` to `1.19.15` and behaviorally tests its encoded-backslash rejection. npm's audit endpoint currently flattens the two ranges to `<2.0.5`, so raw `npm audit --omit=dev` may still report the patched release. `npm run audit:production` fails on every finding except that exact stale-metadata chain, and only permits it while the installed release and regression test remain pinned.
