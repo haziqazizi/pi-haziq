@@ -1,0 +1,14 @@
+{
+  "enabledModels": [
+    "meridian/claude-opus-5",
+    "meridian/claude-fable-5",
+    "tokenmaxxing/gpt-5.6-sol",
+    "tokenmaxxing/gpt-5.6-terra",
+    "openai-codex/gpt-5.6-sol"
+  ],
+  "compaction": {
+    "enabled": true,
+    "reserveTokens": 16384,
+    "keepRecentTokens": 20000
+  }
+}
