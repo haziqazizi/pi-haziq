@@ -14,6 +14,7 @@ Report vulnerabilities privately to the repository owner. Do not include credent
 - Legacy `@mariozechner/pi-*` peer packages are not installed; Pi supplies compatibility aliases from its bundled runtime.
 - Cohesion persists correlation metadata only, never arbitrary tool inputs or provider payloads.
 - Project MCP and service-tier configuration is ignored until Pi marks the project trusted. Global user configuration remains available.
+- Meridian catalog refresh reads only the global user provider configuration, never project files. It does not execute header commands, print credentials or response bodies, or persist auth in the model store.
 - Herdr remains optional and owns its managed Pi transport integration.
 
 ## Transitive advisory verification

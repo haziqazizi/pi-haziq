@@ -17,6 +17,7 @@
     "extensions": [
       "./node_modules/pi-multi-pass/extensions",
       "./extensions/haziq-loop.ts",
+      "./extensions/haziq-meridian-refresh.ts",
       "./node_modules/@juicesharp/rpiv-todo/index.ts",
       "./extensions/haziq-service-tier.ts",
       "./node_modules/pi-image-preview/index.ts",
@@ -72,9 +73,10 @@
     "test": "node --import tsx --test test/*.test.ts",
     "smoke": "node test/package-smoke.mjs",
     "smoke:trust": "node test/trust-smoke.mjs",
+    "smoke:meridian": "node test/meridian-package-smoke.mjs",
     "smoke:production": "test/production-package-smoke.sh",
     "audit:production": "node scripts/audit-production.mjs",
-    "verify": "npm run check && npm test && npm run smoke && npm run smoke:trust",
+    "verify": "npm run check && npm test && npm run smoke && npm run smoke:trust && npm run smoke:meridian",
     "verify:full": "npm run verify && npm run smoke:production && npm run audit:production"
   },
   "engines": {

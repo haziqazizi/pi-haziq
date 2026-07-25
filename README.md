@@ -9,6 +9,7 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 - Preserve the user's chosen default model rather than letting an extension dictate it.
 - Use native `/responses/compact` for Responses-family sessions.
 - Delegate Anthropic-style text compaction to `tokenmaxxing/gpt-5.6-sol`.
+- Refresh Meridian's live model catalog while preserving conservative local capabilities when the endpoint lists IDs only.
 - Correlate todo tasks, dynamic workflows, loops, MCP calls, compaction, and artifacts through versioned Pi events.
 - Enrich Herdr panes when `HERDR_ENV=1` without bundling or replacing Herdr's managed Pi integration.
 - Fail open with visible diagnostics when an optional integration is unavailable.
@@ -31,6 +32,7 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 Compatibility wrappers preserve upstream behavior while closing integration seams:
 
 - `extensions/haziq-loop.ts` releases shared event-bus subscriptions during `/reload`, preventing duplicate loop delivery across extension generations.
+- `extensions/haziq-meridian-refresh.ts` attaches Pi's `refreshModels` hook to a globally configured Meridian provider. ID-only catalogs filter the trusted static models; bounded capability metadata can update limits or add models. Offline, malformed, empty, duplicate, and unreachable catalogs retain the static last-known-good list. Credentials and response bodies are never logged or persisted.
 - `extensions/haziq-mcp.ts` delays MCP configuration until `session_start` and excludes project MCP sources unless Pi marks the project trusted, preventing untrusted eager stdio execution.
 - `extensions/haziq-service-tier.ts` prevents untrusted project configuration from changing request tiers or allow-lists; trusted projects retain normal project-over-global behavior.
 
@@ -66,6 +68,8 @@ Inside Pi:
 ```
 
 The doctor reports expected tools, the active model/API, compaction strategy, service-tier state, active todo/workflow correlation, Herdr availability, and machine configuration presence.
+
+Pi refreshes dynamic model providers during online startup, model-picker refresh, and `pi update`. Meridian discovery reads the global `~/.pi/agent/models.json` provider configuration only; project files cannot change its endpoint or credentials. Current Meridian `/v1/models` responses list model IDs, so local `contextWindow` and `maxTokens` values remain authoritative until Meridian publishes validated capability fields.
 
 ## Cross-model configuration
 
