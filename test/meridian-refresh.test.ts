@@ -199,4 +199,9 @@ test("header commands and HTTP response bodies fail without exposing their value
       return true;
     });
   });
+  await withConfig(modelsJson({}), async (path) => {
+    const fetchImpl = (async () => new Response("x".repeat(1_000_001))) as typeof fetch;
+    const refresh = createMeridianRefreshModels(path, { fetchImpl });
+    await assert.rejects(refresh(refreshContext(true)), /exceeds the size limit/);
+  });
 });

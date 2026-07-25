@@ -4,6 +4,7 @@ import type { RefreshModelsContext } from "@earendil-works/pi-ai";
 
 const MODEL_ID_PATTERN = /^claude-[a-z0-9][a-z0-9.-]{0,126}$/;
 const MAX_CATALOG_MODELS = 100;
+const MAX_CATALOG_BYTES = 1_000_000;
 const MIN_CONTEXT_TOKENS = 16_384;
 const MAX_CONTEXT_TOKENS = 2_000_000;
 const MAX_OUTPUT_TOKENS = 256_000;
@@ -44,6 +45,7 @@ function validBaseUrl(value: unknown): string | undefined {
     const url = new URL(value);
     const loopback = url.hostname === "127.0.0.1" || url.hostname === "localhost" || url.hostname === "::1";
     if (url.protocol !== "https:" && !(url.protocol === "http:" && loopback)) return undefined;
+    if (url.username || url.password || url.search || url.hash) return undefined;
     return url.toString().replace(/\/$/, "");
   } catch {
     return undefined;
@@ -93,10 +95,11 @@ export function loadMeridianProviderSnapshot(path: string): MeridianProviderSnap
     const provider = root.providers.meridian;
     const baseUrl = validBaseUrl(provider.baseUrl);
     if (!baseUrl || !Array.isArray(provider.models)) return undefined;
+    if (provider.models.length > MAX_CATALOG_MODELS) return undefined;
     const models = provider.models
       .map((model) => parseStaticModel(model, provider.compat))
       .filter((model): model is ProviderModelConfig => model !== undefined);
-    if (models.length === 0) return undefined;
+    if (models.length === 0 || new Set(models.map((model) => model.id)).size !== models.length) return undefined;
     const headers = isObject(provider.headers)
       ? Object.fromEntries(
           Object.entries(provider.headers).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
@@ -181,6 +184,34 @@ function resolveHeaderValue(value: string, env: NodeJS.ProcessEnv): string {
   return resolved;
 }
 
+async function readBoundedJson(response: Response): Promise<unknown> {
+  const declaredLength = Number(response.headers.get("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_CATALOG_BYTES) {
+    throw new Error("Meridian catalog response exceeds the size limit");
+  }
+  if (!response.body) throw new Error("Meridian catalog returned an empty response");
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let bytes = 0;
+  let text = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    bytes += value.byteLength;
+    if (bytes > MAX_CATALOG_BYTES) {
+      await reader.cancel();
+      throw new Error("Meridian catalog response exceeds the size limit");
+    }
+    text += decoder.decode(value, { stream: true });
+  }
+  text += decoder.decode();
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    throw new Error("Meridian catalog returned invalid JSON");
+  }
+}
+
 export interface MeridianRefreshOptions {
   fetchImpl?: typeof fetch;
   env?: NodeJS.ProcessEnv;
@@ -223,12 +254,7 @@ export function createMeridianRefreshModels(
         throw new Error("Meridian catalog request failed");
       }
       if (!response.ok) throw new Error(`Meridian catalog request failed with HTTP ${response.status}`);
-      let payload: unknown;
-      try {
-        payload = await response.json();
-      } catch {
-        throw new Error("Meridian catalog returned invalid JSON");
-      }
+      const payload = await readBoundedJson(response);
       const models = parseMeridianCatalog(payload, snapshot.models);
       lastSuccess = { at: Date.now(), models };
       return models;
