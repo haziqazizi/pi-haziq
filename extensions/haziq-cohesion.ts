@@ -1,6 +1,7 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
-import { basename, join } from "node:path";
+import { basename, dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { CONFIG_DIR_NAME, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
 import {
   STATE_ENTRY_TYPE,
@@ -27,14 +28,21 @@ import {
   type ToolHealth,
   type WorkflowLink,
 } from "../src/cohesion.ts";
+import { appendPiHaziqContract, hasPiHaziqContract } from "../src/contract.ts";
 import {
   MERIDIAN_REFRESH_STATUS_EVENT,
   formatMeridianRefreshStatus,
   isMeridianRefreshStatus,
   type MeridianRefreshStatus,
 } from "../src/meridian-refresh.ts";
+import { applySetup, defaultSetupPaths, formatSetupPlan, planSetup } from "../src/setup.ts";
 
 const EVENT_LOG_LIMIT = 100;
+const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const SETUP_PATHS = defaultSetupPaths(PACKAGE_ROOT);
+const APPEND_SYSTEM_SOURCE = join(PACKAGE_ROOT, "APPEND_SYSTEM.md");
+const APPEND_SYSTEM_TARGET = join(SETUP_PATHS.agentDir, "APPEND_SYSTEM.md");
+const APPEND_SYSTEM_POLICY = readFileSync(APPEND_SYSTEM_SOURCE, "utf8");
 const HERDR_METADATA_TTL_MS = 120_000;
 const BETTER_COMPACTION_CONFIG = join(
   homedir(),
@@ -80,6 +88,14 @@ function mcpDescriptor(args: unknown): Record<string, unknown> {
 
 function configStatus(path: string, configured: boolean): string {
   return `${configured ? "✓" : "○"} ${path}`;
+}
+
+function appendSystemConfigured(): boolean {
+  try {
+    return existsSync(APPEND_SYSTEM_TARGET) && realpathSync(APPEND_SYSTEM_TARGET) === realpathSync(APPEND_SYSTEM_SOURCE);
+  } catch {
+    return false;
+  }
 }
 
 function describeCapabilities(snapshot: CohesionSnapshot): string[] {
@@ -307,12 +323,18 @@ export default function haziqCohesion(pi: ExtensionAPI) {
       `Herdr: ${!herdrEnabled ? "not active" : herdrOperational === false ? "failed" : herdrOperational === true ? "connected" : "detecting"}`,
       "",
       "Config",
+      configStatus(APPEND_SYSTEM_TARGET, appendSystemConfigured()),
       configStatus(BETTER_COMPACTION_CONFIG, Boolean(readJson(BETTER_COMPACTION_CONFIG))),
       configStatus(SERVICE_TIER_CONFIG, Boolean(readJson(SERVICE_TIER_CONFIG))),
       configStatus(WORKFLOW_TIERS_CONFIG, Boolean(readJson(WORKFLOW_TIERS_CONFIG))),
     ];
     return lines.join("\n");
   }
+
+  pi.on("before_agent_start", (event) => {
+    const systemPrompt = appendPiHaziqContract(event.systemPrompt, APPEND_SYSTEM_POLICY);
+    return systemPrompt === event.systemPrompt ? undefined : { systemPrompt };
+  });
 
   pi.registerCommand("cohesion", {
     description: "Inspect Haziq cross-extension health, capabilities, and recent events",
@@ -327,6 +349,61 @@ export default function haziqCohesion(pi: ExtensionAPI) {
         await ctx.reload();
         return;
       }
+      if (action === "contract") {
+        const options = ctx.getSystemPromptOptions();
+        const append = typeof options.appendSystemPrompt === "string" ? options.appendSystemPrompt : "";
+        const loadedFromAppend =
+          hasPiHaziqContract(append, APPEND_SYSTEM_POLICY) ||
+          hasPiHaziqContract(ctx.getSystemPrompt(), APPEND_SYSTEM_POLICY);
+        ctx.ui.notify(
+          `pi-haziq contract: ${loadedFromAppend ? "loaded" : "extension fallback ready"} · ${APPEND_SYSTEM_TARGET}`,
+          "info",
+        );
+        return;
+      }
+      if (action === "setup" || action.startsWith("setup ")) {
+        const setupAction = action.slice("setup".length).trim();
+        if (setupAction && setupAction !== "check") {
+          ctx.ui.notify("Usage: /cohesion setup [check]", "warning");
+          return;
+        }
+        try {
+          const operations = await planSetup(SETUP_PATHS);
+          const report = formatSetupPlan(operations);
+          const changed = operations.filter((operation) => operation.status !== "unchanged");
+          if (setupAction === "check" || changed.length === 0) {
+            ctx.ui.notify(report, changed.length === 0 ? "info" : "warning");
+            return;
+          }
+          if (!ctx.hasUI) {
+            ctx.ui.notify(`${report}\n\nInteractive confirmation is required to apply setup.`, "warning");
+            return;
+          }
+          const confirmed = await ctx.ui.confirm(
+            "Apply pi-haziq setup?",
+            `${report}\n\nExisting changed files are backed up. Provider credentials and auth files are never touched.`,
+          );
+          if (!confirmed) {
+            ctx.ui.notify("pi-haziq setup cancelled; no files changed.", "info");
+            return;
+          }
+          const applied = await applySetup(operations);
+          ctx.ui.notify(
+            [
+              `pi-haziq setup applied ${applied.length} change${applied.length === 1 ? "" : "s"}.`,
+              ...applied.map((operation) =>
+                `- ${operation.status} ${operation.target}${operation.backup ? ` · backup ${operation.backup}` : ""}`
+              ),
+              "Run /reload, then /cohesion doctor.",
+            ].join("\n"),
+            "info",
+          );
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          ctx.ui.notify(`pi-haziq setup failed safely: ${message}`, "error");
+        }
+        return;
+      }
       if (action === "doctor" || action === "status") {
         refreshToolHealth();
         refreshCapabilities(ctx);
@@ -335,7 +412,7 @@ export default function haziqCohesion(pi: ExtensionAPI) {
         ctx.ui.notify(doctorReport(), toolHealth.status === "healthy" ? "info" : "warning");
         return;
       }
-      ctx.ui.notify("Usage: /cohesion [status|doctor|events|reload]", "warning");
+      ctx.ui.notify("Usage: /cohesion [status|doctor|events|contract|reload|setup [check]]", "warning");
     },
   });
 

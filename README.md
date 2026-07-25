@@ -13,6 +13,8 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 - Correlate todo tasks, dynamic workflows, loops, MCP calls, compaction, and artifacts through versioned Pi events.
 - Enrich Herdr panes when `HERDR_ENV=1` without bundling or replacing Herdr's managed Pi integration.
 - Fail open with visible diagnostics when an optional integration is unavailable.
+- Keep every Pi session on the reviewed package revision through an instruction-driven `APPEND_SYSTEM.md` contract.
+- Apply approved non-secret configuration through an explicit, previewed, and reversible `/cohesion setup` command.
 
 ## Bundled extensions
 
@@ -49,13 +51,42 @@ Try in an isolated Pi configuration before touching a live setup:
 HOME=/tmp/pi-haziq-home pi -e ./extensions/haziq-cohesion.ts
 ```
 
-Install from Git:
+## Install and bootstrap
+
+Install once from Git:
 
 ```bash
 pi install git:github.com/haziqazizi/pi-haziq
 ```
 
-If the extensions are already installed individually, follow [`docs/migration.md`](docs/migration.md) to avoid loading duplicate copies.
+Start Pi and run:
+
+```text
+/cohesion setup
+/reload
+/cohesion doctor
+/cohesion contract
+```
+
+`/cohesion setup` previews its work and asks before changing anything. It:
+
+- links Pi's global `APPEND_SYSTEM.md` (under `getAgentDir()`) to the package-owned [`APPEND_SYSTEM.md`](APPEND_SYSTEM.md), preserving the separate machine-wide `AGENTS.md`;
+- merges the approved model scope and compaction settings without changing the user's default provider/model or package list;
+- writes each pinned owner's configuration where that owner actually reads it (some currently hardcode `~/.pi` even when Pi's agent directory is overridden);
+- shows a key-only, value-redacted preview; takes an exclusive setup lock; repeatedly rejects stale targets; stages complete replacements; atomically replaces each target; and backs up every existing file it changes;
+- never reads or writes provider credentials, `auth.json`, `models.json`, MCP authentication, sessions, trust decisions, or caches.
+
+On future sessions, the appended policy instructs the agent to run:
+
+```bash
+pi update --extension git:github.com/haziqazizi/pi-haziq
+```
+
+The policy records the installed Git revision before and after the update instead of trusting Pi's generic status text. If the revision changed, reload before continuing so one Pi runtime never mixes extension generations. Offline or unreadable package state is reported as not verified. This is intentionally instruction-driven rather than a shell wrapper: the first process loads the installed revision, then its first substantive agent turn checks for updates.
+
+Pi itself chooses a trusted project `.pi/APPEND_SYSTEM.md` or an explicit `--append-system-prompt` instead of composing it with the global file. Cohesion therefore uses the package file as the single source of truth and appends the exact complete contract through `before_agent_start` only when Pi's selected system prompt does not already contain it. Project instructions remain present; heading-only collisions cannot suppress the contract; and the package contract does not duplicate across turns or reloads.
+
+If the extensions are already installed individually, follow [`docs/migration.md`](docs/migration.md) to avoid loading duplicate copies. The reconciled approved contract and explicit non-goals are recorded in [`docs/approved-contract.md`](docs/approved-contract.md).
 
 ## Diagnostics
 
@@ -65,6 +96,9 @@ Inside Pi:
 /cohesion
 /cohesion doctor
 /cohesion events
+/cohesion contract
+/cohesion setup check
+/cohesion setup
 ```
 
 The doctor reports expected tools, the active model/API, compaction strategy, service-tier state, active todo/workflow correlation, Herdr availability, machine configuration presence, and the last Meridian refresh result with published/capability model counts and timestamp.
@@ -80,7 +114,7 @@ Templates live in [`config/`](config/):
 - `pi-openai-service-tier.json`
 - `workflow-model-tiers.json`
 
-They intentionally contain no credentials. Applying them is an explicit migration step, not a package-load side effect.
+They intentionally contain no credentials. Applying them through `/cohesion setup` is an explicit, confirmed migration step, never a package-load side effect.
 
 ## Herdr
 
@@ -92,7 +126,11 @@ When running in Herdr, cohesion reports scoped metadata tokens for the active mo
 export HAZIQ_COHESION_HERDR_NOTIFICATIONS=1
 ```
 
-A true pane-backed workflow agent backend remains experimental and will be attempted only after the core package seams pass end-to-end tests.
+A true pane-backed workflow agent backend remains experimental and is not part of the approved first-release contract.
+
+## Authoring and synchronization
+
+Never edit Pi's managed clone under `~/.pi/agent/git/`. Make changes in a normal source checkout or task worktree, run `bin/test` and the production audit, and publish a PR. Do not report an authorized package change complete while it exists only on one machine. Merge only with explicit authority and green evidence; then update the installed package, reload, and run `/cohesion doctor`.
 
 ## Security
 
