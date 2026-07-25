@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdtemp, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,7 +10,20 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const temp = await mkdtemp(join(tmpdir(), "pi-haziq-smoke."));
 const home = join(temp, "home");
 const cwd = join(temp, "cwd");
-await import("node:fs/promises").then(({ mkdir }) => Promise.all([mkdir(home), mkdir(cwd)]));
+await Promise.all([mkdir(home), mkdir(cwd)]);
+const trustedMarker = join(temp, "TRUSTED_MCP_STARTED");
+await writeFile(
+  join(cwd, ".mcp.json"),
+  JSON.stringify({
+    mcpServers: {
+      trustedSmoke: {
+        command: "sh",
+        args: ["-c", `touch ${trustedMarker}`],
+        lifecycle: "eager",
+      },
+    },
+  }),
+);
 
 const env = { ...process.env };
 for (const name of Object.keys(env)) {
@@ -103,6 +117,9 @@ try {
   assert.ok(names.includes("todos"));
   assert.ok(names.includes("mcp"));
 
+  await new Promise((resolveWait) => setTimeout(resolveWait, 500));
+  assert.equal(existsSync(trustedMarker), true, "trusted project MCP config did not initialize");
+
   send({ id: "doctor", type: "prompt", message: "/cohesion doctor" });
   const response = await waitFor((event) => event.type === "response" && event.id === "doctor");
   assert.equal(response.success, true);
@@ -127,9 +144,13 @@ try {
 
   const extensionErrors = events.filter((event) => event.type === "extension_error");
   assert.deepEqual(extensionErrors, []);
-  assert.equal(stderr.trim(), "", `unexpected stderr: ${stderr}`);
+  assert.equal(
+    stderr.trim(),
+    "MCP: Failed to connect to trustedSmoke: Connection closed",
+    `unexpected stderr: ${stderr}`,
+  );
 
-  console.log("package smoke: healthy, 8/8 tools, reload-safe, no duplicate cohesion command, no extension errors");
+  console.log("package smoke: healthy, 8/8 tools, trusted MCP initialized, reload-safe, no duplicates or extension errors");
 } finally {
   child.kill("SIGTERM");
   await new Promise((resolveExit) => {

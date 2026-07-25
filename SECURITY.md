@@ -13,6 +13,7 @@ Report vulnerabilities privately to the repository owner. Do not include credent
 - Production installs omit development dependencies.
 - Legacy `@mariozechner/pi-*` peer packages are not installed; Pi supplies compatibility aliases from its bundled runtime.
 - Cohesion persists correlation metadata only, never arbitrary tool inputs or provider payloads.
+- Project MCP and service-tier configuration is ignored until Pi marks the project trusted. Global user configuration remains available.
 - Herdr remains optional and owns its managed Pi transport integration.
 
 ## Known transitive advisory

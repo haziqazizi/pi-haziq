@@ -28,7 +28,11 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 
 `extensions/haziq-cohesion.ts` observes their public Pi surfaces and emits normalized `haziq:*` lifecycle events. It does not reimplement their algorithms.
 
-`extensions/haziq-loop.ts` is a compatibility wrapper around pi-loop 0.2.0. It preserves upstream behavior while releasing shared event-bus subscriptions during `/reload`, preventing duplicate loop delivery across extension generations.
+Compatibility wrappers preserve upstream behavior while closing integration seams:
+
+- `extensions/haziq-loop.ts` releases shared event-bus subscriptions during `/reload`, preventing duplicate loop delivery across extension generations.
+- `extensions/haziq-mcp.ts` delays MCP configuration until `session_start` and excludes project MCP sources unless Pi marks the project trusted, preventing untrusted eager stdio execution.
+- `extensions/haziq-service-tier.ts` prevents untrusted project configuration from changing request tiers or allow-lists; trusted projects retain normal project-over-global behavior.
 
 ## Development
 

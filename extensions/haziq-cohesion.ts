@@ -156,7 +156,12 @@ export default function haziqCohesion(pi: ExtensionAPI) {
     toolHealth = inspectTools(tools.map((tool) => tool.name));
     mcpToolNames = new Set(
       tools
-        .filter((tool) => tool.name === "mcp" || tool.sourceInfo.path.includes("pi-mcp-adapter"))
+        .filter(
+          (tool) =>
+            tool.name === "mcp" ||
+            tool.sourceInfo.path.includes("pi-mcp-adapter") ||
+            tool.sourceInfo.path.includes("haziq-mcp"),
+        )
         .map((tool) => tool.name),
     );
   }
@@ -171,6 +176,22 @@ export default function haziqCohesion(pi: ExtensionAPI) {
   function updateStatus(ctx = activeContext) {
     if (!ctx?.hasUI) return;
     ctx.ui.setStatus("haziq-cohesion", statusText());
+  }
+
+  async function executeHerdr(args: string[], operation: string) {
+    const result = await pi.exec("herdr", args, { timeout: 5_000 });
+    if (!execResultSucceeded(result)) {
+      throw new Error(`${operation} failed (code ${result.code}${result.killed ? ", killed" : ""})`);
+    }
+    herdrOperational = true;
+  }
+
+  function reportHerdrFailure(operation: string, error: unknown) {
+    herdrOperational = false;
+    emit("haziq:herdr-failed", "herdr", {
+      operation,
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 
   async function writeHerdrMetadata() {
@@ -210,11 +231,7 @@ export default function haziqCohesion(pi: ExtensionAPI) {
       "--ttl-ms",
       String(HERDR_METADATA_TTL_MS),
     ];
-    const result = await pi.exec("herdr", args, { timeout: 5_000 });
-    if (!execResultSucceeded(result)) {
-      throw new Error(`Herdr metadata command failed (code ${result.code}${result.killed ? ", killed" : ""})`);
-    }
-    herdrOperational = true;
+    await executeHerdr(args, "pane.report-metadata");
   }
 
   function queueHerdrMetadata() {
@@ -229,11 +246,7 @@ export default function haziqCohesion(pi: ExtensionAPI) {
           await writeHerdrMetadata();
         }
       } catch (error) {
-        herdrOperational = false;
-        emit("haziq:herdr-failed", "herdr", {
-          operation: "pane.report-metadata",
-          error: error instanceof Error ? error.message : String(error),
-        });
+        reportHerdrFailure("pane.report-metadata", error);
       } finally {
         herdrMetadataInFlight = false;
         if (herdrMetadataQueued && !shuttingDown) queueHerdrMetadata();
@@ -243,9 +256,10 @@ export default function haziqCohesion(pi: ExtensionAPI) {
 
   function notifyHerdr(title: string, body: string, sound: "done" | "request") {
     if (!herdrEnabled || !herdrNotifications) return;
-    void pi.exec("herdr", ["notification", "show", title, "--body", body, "--sound", sound], {
-      timeout: 5_000,
-    });
+    void executeHerdr(
+      ["notification", "show", title, "--body", body, "--sound", sound],
+      "notification.show",
+    ).catch((error) => reportHerdrFailure("notification.show", error));
   }
 
   function workflowByRunId(runId: string | undefined): WorkflowLink | undefined {
@@ -371,7 +385,10 @@ export default function haziqCohesion(pi: ExtensionAPI) {
       const args = event.args as { action?: unknown; id?: unknown; status?: unknown };
       if (args.action === "update" && typeof args.id === "number") {
         if (args.status === "in_progress") pendingTodoCandidates.add(args.id);
-        if (args.id === snapshot.activeTodoId && (args.status === "completed" || args.status === "deleted")) {
+        if (
+          args.id === snapshot.activeTodoId &&
+          (args.status === "pending" || args.status === "completed" || args.status === "deleted")
+        ) {
           pendingTodoClearsActive = true;
         }
       }
@@ -608,9 +625,8 @@ export default function haziqCohesion(pi: ExtensionAPI) {
     shuttingDown = true;
     herdrMetadataQueued = false;
     if (event.reason === "quit" && herdrEnabled && process.env.HERDR_PANE_ID) {
-      await pi.exec(
-        "herdr",
-        [
+      try {
+        await executeHerdr([
           "pane",
           "report-metadata",
           process.env.HERDR_PANE_ID,
@@ -634,9 +650,10 @@ export default function haziqCohesion(pi: ExtensionAPI) {
           "compaction_model",
           "--clear-token",
           "cohesion",
-        ],
-        { timeout: 5_000 },
-      );
+        ], "pane.report-metadata.clear");
+      } catch (error) {
+        reportHerdrFailure("pane.report-metadata.clear", error);
+      }
     }
     activeContext = undefined;
   });

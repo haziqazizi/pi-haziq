@@ -16,6 +16,7 @@ npm install --omit=dev --legacy-peer-deps "$TARBALL" >/dev/null
 
 PACKAGE="$TMP/consumer/node_modules/pi-haziq"
 PI_HAZIQ_SMOKE_PI_BIN="$(command -v pi)" node "$PACKAGE/test/package-smoke.mjs"
+PI_HAZIQ_SMOKE_PI_BIN="$(command -v pi)" node "$PACKAGE/test/trust-smoke.mjs"
 
 if [[ -d "$TMP/consumer/node_modules/@mariozechner" ]]; then
   echo "legacy Pi core packages were installed" >&2

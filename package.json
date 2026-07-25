@@ -18,9 +18,9 @@
       "./node_modules/pi-multi-pass/extensions",
       "./extensions/haziq-loop.ts",
       "./node_modules/@juicesharp/rpiv-todo/index.ts",
-      "./node_modules/pi-openai-service-tier/index.ts",
+      "./extensions/haziq-service-tier.ts",
       "./node_modules/pi-image-preview/index.ts",
-      "./node_modules/pi-mcp-adapter/index.ts",
+      "./extensions/haziq-mcp.ts",
       "./node_modules/@lll9p/pi-better-compaction/index.ts",
       "./node_modules/@quintinshaw/pi-dynamic-workflows/extensions/workflow.ts",
       "./extensions/haziq-cohesion.ts"
@@ -71,8 +71,9 @@
     "check": "tsc --noEmit",
     "test": "node --import tsx --test test/*.test.ts",
     "smoke": "node test/package-smoke.mjs",
+    "smoke:trust": "node test/trust-smoke.mjs",
     "smoke:production": "test/production-package-smoke.sh",
-    "verify": "npm run check && npm test && npm run smoke",
+    "verify": "npm run check && npm test && npm run smoke && npm run smoke:trust",
     "verify:full": "npm run verify && npm run smoke:production"
   },
   "engines": {
