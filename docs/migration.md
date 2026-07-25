@@ -49,24 +49,37 @@ npm:@quintinshaw/pi-dynamic-workflows@3.4.1
 
 Keep the single `git:github.com/haziqazizi/pi-haziq` entry.
 
-## 5. Apply non-secret configuration
+## 5. Apply non-secret configuration and the Pi preamble
 
-Merge `config/settings.fragment.json` into `~/.pi/agent/settings.json` without changing the user's chosen default provider/model.
-
-Copy or merge:
+Start Pi and run:
 
 ```text
+/cohesion setup check
+/cohesion setup
+```
+
+The first command is read-only. The second shows a key-only, value-redacted preview and requires confirmation. It takes an exclusive setup lock, revalidates every preview row after confirmation and before replacement, stages complete replacements, atomically replaces each target, and backs up changed files. It then:
+
+- links the package-owned `APPEND_SYSTEM.md` into Pi's global agent directory (`getAgentDir()`);
+- merges `config/settings.fragment.json` without changing the chosen default provider/model or package list;
+- merges the better-compaction, service-tier, and workflow-tier templates where those pinned owners actually read them.
+
+It never touches `auth.json`, `models.json`, provider credentials, MCP authentication, sessions, trust decisions, or caches. If an owned JSON target is malformed, an unexpected configuration symlink is present, or any target changes after preview, setup fails before changing files. Pi agent-directory overrides are honored for Pi-owned files; pinned extensions that hardcode `~/.pi` continue to receive config there.
+
+For manual recovery, the target mapping is:
+
+```text
+APPEND_SYSTEM.md
+  → <getAgentDir()>/APPEND_SYSTEM.md
+config/settings.fragment.json
+  → <getAgentDir()>/settings.json
 config/pi-better-compaction.json
   → ~/.pi/agent/extensions/pi-better-compaction/config.json
-
 config/pi-openai-service-tier.json
   → ~/.pi/agent/extensions/pi-openai-service-tier.json
-
 config/workflow-model-tiers.json
   → ~/.pi/workflows/model-tiers.json
 ```
-
-Review before overwriting local changes.
 
 ## 6. Reload and prove
 
@@ -75,7 +88,9 @@ Review before overwriting local changes.
 /cohesion doctor
 ```
 
-Then verify:
+Then run `/cohesion contract`. It reports `loaded` when Pi selected the global append file, or `extension fallback ready` when a trusted project/CLI append source shadows it; cohesion injects the package contract before the next agent turn in the latter case.
+
+Also verify:
 
 - Each expected tool appears once.
 - Model cycling contains the configured Meridian, Tokenmaxxing, and OpenAI Codex models.
@@ -84,10 +99,11 @@ Then verify:
 
 ## Rollback
 
-Restore the settings backup and reload Pi:
+`/cohesion setup` reports every created/updated target and the exact backup path for each update.
 
-```bash
-cp ~/.pi/agent/settings.json.pre-pi-haziq ~/.pi/agent/settings.json
-```
+- For an **updated** target, move its reported `.pre-pi-haziq-<timestamp>` backup back over the target.
+- For a **created** target, remove that target.
+- Restore all targets from the same setup run before reloading; do not mix timestamps from different runs.
+- Then run `/reload` and `/cohesion doctor`.
 
-The package does not modify or own provider authentication.
+The affected target set is the five mappings in step 5: global append policy, settings fragment, better compaction, service tier, and workflow tiers. The package does not modify or own provider authentication.
