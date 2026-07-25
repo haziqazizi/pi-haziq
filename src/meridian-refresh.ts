@@ -9,6 +9,18 @@ const MIN_CONTEXT_TOKENS = 16_384;
 const MAX_CONTEXT_TOKENS = 2_000_000;
 const MAX_OUTPUT_TOKENS = 256_000;
 
+export const MERIDIAN_REFRESH_STATUS_EVENT = "haziq:meridian-refresh-status";
+
+export interface MeridianRefreshStatus {
+  version: 1;
+  status: "offline" | "refreshing" | "succeeded" | "failed";
+  source: "static" | "network" | "cache";
+  timestamp: number;
+  modelCount: number;
+  capabilityModelCount: number;
+  error?: "HTTP 4xx" | "HTTP 5xx" | "auth unavailable" | "headers unavailable" | "config unavailable" | "request failed" | "catalog rejected" | "refresh failed";
+}
+
 interface JsonObject {
   [key: string]: unknown;
 }
@@ -212,10 +224,81 @@ async function readBoundedJson(response: Response): Promise<unknown> {
   }
 }
 
+export function isMeridianRefreshStatus(value: unknown): value is MeridianRefreshStatus {
+  if (!isObject(value) || value.version !== 1) return false;
+  if (!["offline", "refreshing", "succeeded", "failed"].includes(String(value.status))) return false;
+  const validError =
+    value.error === undefined ||
+    [
+      "HTTP 4xx",
+      "HTTP 5xx",
+      "auth unavailable",
+      "headers unavailable",
+      "config unavailable",
+      "request failed",
+      "catalog rejected",
+      "refresh failed",
+    ].includes(String(value.error));
+  return (
+    ["static", "network", "cache"].includes(String(value.source)) &&
+    typeof value.timestamp === "number" &&
+    Number.isFinite(value.timestamp) &&
+    value.timestamp > 0 &&
+    typeof value.modelCount === "number" &&
+    Number.isInteger(value.modelCount) &&
+    value.modelCount >= 0 &&
+    value.modelCount <= MAX_CATALOG_MODELS &&
+    typeof value.capabilityModelCount === "number" &&
+    Number.isInteger(value.capabilityModelCount) &&
+    value.capabilityModelCount >= 0 &&
+    value.capabilityModelCount <= MAX_CATALOG_MODELS &&
+    validError
+  );
+}
+
+export function formatMeridianRefreshStatus(status: MeridianRefreshStatus | undefined): string {
+  if (!status) return "not observed";
+  const timestamp = new Date(status.timestamp).toISOString();
+  if (status.status === "refreshing") return `refreshing · ${timestamp}`;
+  if (status.status === "failed") {
+    return `failed (${status.error ?? "refresh failed"}) · retained ${status.modelCount} models · ${timestamp}`;
+  }
+  const capabilities = status.capabilityModelCount > 0 ? ` · ${status.capabilityModelCount} capability records` : "";
+  const models = status.status === "offline" ? `${status.modelCount} configured models` : `${status.modelCount} published models`;
+  return `${status.status === "offline" ? "static" : status.source} · ${models}${capabilities} · ${timestamp}`;
+}
+
+function safeRefreshError(error: unknown): MeridianRefreshStatus["error"] {
+  const message = error instanceof Error ? error.message : "";
+  const status = message.match(/HTTP (\d{3})/)?.[1];
+  if (status?.startsWith("4")) return "HTTP 4xx";
+  if (status?.startsWith("5")) return "HTTP 5xx";
+  if (message.includes("credential")) return "auth unavailable";
+  if (message.includes("headers")) return "headers unavailable";
+  if (message.includes("configuration")) return "config unavailable";
+  if (message.includes("request failed")) return "request failed";
+  if (message.includes("catalog") || message.includes("response")) return "catalog rejected";
+  return "refresh failed";
+}
+
+function capabilityRecordCount(payload: unknown): number {
+  if (!isObject(payload) || !Array.isArray(payload.data)) return 0;
+  return payload.data.filter(
+    (item) =>
+      isObject(item) &&
+      (item.contextWindow !== undefined ||
+        item.context_window !== undefined ||
+        item.maxTokens !== undefined ||
+        item.max_output_tokens !== undefined ||
+        isObject(item.capabilities)),
+  ).length;
+}
+
 export interface MeridianRefreshOptions {
   fetchImpl?: typeof fetch;
   env?: NodeJS.ProcessEnv;
   getResolvedHeaders?: () => Record<string, string> | undefined;
+  onStatus?: (status: MeridianRefreshStatus) => void;
 }
 
 export function createMeridianRefreshModels(
@@ -224,40 +307,112 @@ export function createMeridianRefreshModels(
 ): (context: RefreshModelsContext) => Promise<ProviderModelConfig[]> {
   const fetchImpl = options.fetchImpl ?? fetch;
   const env = options.env ?? process.env;
-  let lastSuccess: { at: number; models: ProviderModelConfig[] } | undefined;
+  let lastSuccess: { at: number; models: ProviderModelConfig[]; capabilityModelCount: number } | undefined;
   let inFlight: Promise<ProviderModelConfig[]> | undefined;
+  const publishStatus = (status: MeridianRefreshStatus) => {
+    try {
+      options.onStatus?.(status);
+    } catch {
+      // Diagnostics must never break model refresh.
+    }
+  };
   return async (context) => {
     const snapshot = loadMeridianProviderSnapshot(configPath);
-    if (!snapshot) throw new Error("Meridian provider configuration is unavailable");
-    if (!context.allowNetwork) return lastSuccess?.models ?? snapshot.models;
-    if (!context.force && lastSuccess && Date.now() - lastSuccess.at < 60_000) return lastSuccess.models;
-    if (inFlight) return inFlight;
-    inFlight = (async () => {
-      if (context.credential?.type !== "api_key" || !context.credential.key) {
-        throw new Error("Meridian refresh credential is unavailable");
-      }
-      const headers = new Headers({ Accept: "application/json" });
-      const resolvedHeaders = options.getResolvedHeaders?.();
-      if (options.getResolvedHeaders && Object.keys(snapshot.headers).length > 0 && !resolvedHeaders) {
-        throw new Error("Meridian refresh headers are unavailable");
-      }
-      for (const [name, value] of Object.entries(resolvedHeaders ?? snapshot.headers)) {
-        headers.set(name, resolvedHeaders ? value : resolveHeaderValue(value, env));
-      }
-      headers.set("x-api-key", context.credential.key);
-      const timeout = AbortSignal.timeout(10_000);
-      const signal = context.signal ? AbortSignal.any([context.signal, timeout]) : timeout;
-      let response: Response;
-      try {
-        response = await fetchImpl(`${snapshot.baseUrl}/v1/models`, { headers, signal });
-      } catch {
-        throw new Error("Meridian catalog request failed");
-      }
-      if (!response.ok) throw new Error(`Meridian catalog request failed with HTTP ${response.status}`);
-      const payload = await readBoundedJson(response);
-      const models = parseMeridianCatalog(payload, snapshot.models);
-      lastSuccess = { at: Date.now(), models };
+    if (!snapshot) {
+      const error = new Error("Meridian provider configuration is unavailable");
+      publishStatus({
+        version: 1,
+        status: "failed",
+        source: "static",
+        timestamp: Date.now(),
+        modelCount: 0,
+        capabilityModelCount: 0,
+        error: safeRefreshError(error),
+      });
+      throw error;
+    }
+    if (!context.allowNetwork) {
+      const models = lastSuccess?.models ?? snapshot.models;
+      publishStatus({
+        version: 1,
+        status: "offline",
+        source: lastSuccess ? "cache" : "static",
+        timestamp: Date.now(),
+        modelCount: models.length,
+        capabilityModelCount: lastSuccess?.capabilityModelCount ?? 0,
+      });
       return models;
+    }
+    if (!context.force && lastSuccess && Date.now() - lastSuccess.at < 60_000) {
+      publishStatus({
+        version: 1,
+        status: "succeeded",
+        source: "cache",
+        timestamp: lastSuccess.at,
+        modelCount: lastSuccess.models.length,
+        capabilityModelCount: lastSuccess.capabilityModelCount,
+      });
+      return lastSuccess.models;
+    }
+    if (inFlight) return inFlight;
+    publishStatus({
+      version: 1,
+      status: "refreshing",
+      source: "network",
+      timestamp: Date.now(),
+      modelCount: lastSuccess?.models.length ?? snapshot.models.length,
+      capabilityModelCount: lastSuccess?.capabilityModelCount ?? 0,
+    });
+    inFlight = (async () => {
+      try {
+        if (context.credential?.type !== "api_key" || !context.credential.key) {
+          throw new Error("Meridian refresh credential is unavailable");
+        }
+        const headers = new Headers({ Accept: "application/json" });
+        const resolvedHeaders = options.getResolvedHeaders?.();
+        if (options.getResolvedHeaders && Object.keys(snapshot.headers).length > 0 && !resolvedHeaders) {
+          throw new Error("Meridian refresh headers are unavailable");
+        }
+        for (const [name, value] of Object.entries(resolvedHeaders ?? snapshot.headers)) {
+          headers.set(name, resolvedHeaders ? value : resolveHeaderValue(value, env));
+        }
+        headers.set("x-api-key", context.credential.key);
+        const timeout = AbortSignal.timeout(10_000);
+        const signal = context.signal ? AbortSignal.any([context.signal, timeout]) : timeout;
+        let response: Response;
+        try {
+          response = await fetchImpl(`${snapshot.baseUrl}/v1/models`, { headers, signal });
+        } catch {
+          throw new Error("Meridian catalog request failed");
+        }
+        if (!response.ok) throw new Error(`Meridian catalog request failed with HTTP ${response.status}`);
+        const payload = await readBoundedJson(response);
+        const models = parseMeridianCatalog(payload, snapshot.models);
+        const capabilityModels = capabilityRecordCount(payload);
+        const at = Date.now();
+        lastSuccess = { at, models, capabilityModelCount: capabilityModels };
+        publishStatus({
+          version: 1,
+          status: "succeeded",
+          source: "network",
+          timestamp: at,
+          modelCount: models.length,
+          capabilityModelCount: capabilityModels,
+        });
+        return models;
+      } catch (error) {
+        const retained = lastSuccess?.models ?? snapshot.models;
+        publishStatus({
+          version: 1,
+          status: "failed",
+          source: "network",
+          timestamp: Date.now(),
+          modelCount: retained.length,
+          capabilityModelCount: lastSuccess?.capabilityModelCount ?? 0,
+          error: safeRefreshError(error),
+        });
+        throw error;
+      }
     })();
     try {
       return await inFlight;
