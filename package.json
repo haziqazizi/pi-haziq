@@ -1,0 +1,82 @@
+{
+  "name": "pi-haziq",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A cohesive, opinionated Pi coding-agent package composed from reviewed extensions and first-party integration hooks.",
+  "keywords": [
+    "pi-package",
+    "pi-extension"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/haziqazizi/pi-haziq.git"
+  },
+  "pi": {
+    "extensions": [
+      "./node_modules/pi-multi-pass/extensions",
+      "./extensions/haziq-loop.ts",
+      "./node_modules/@juicesharp/rpiv-todo/index.ts",
+      "./extensions/haziq-service-tier.ts",
+      "./node_modules/pi-image-preview/index.ts",
+      "./extensions/haziq-mcp.ts",
+      "./node_modules/@lll9p/pi-better-compaction/index.ts",
+      "./node_modules/@quintinshaw/pi-dynamic-workflows/extensions/workflow.ts",
+      "./extensions/haziq-cohesion.ts"
+    ],
+    "skills": [
+      "./node_modules/@quintinshaw/pi-dynamic-workflows/skills/workflow-authoring",
+      "./node_modules/@quintinshaw/pi-dynamic-workflows/skills/workflow-patterns"
+    ]
+  },
+  "dependencies": {
+    "@juicesharp/rpiv-todo": "2.1.0",
+    "@koltmcbride/pi-loop": "0.2.0",
+    "@lll9p/pi-better-compaction": "0.2.1",
+    "@quintinshaw/pi-dynamic-workflows": "3.4.1",
+    "pi-image-preview": "0.1.5",
+    "pi-mcp-adapter": "2.14.0",
+    "pi-multi-pass": "1.3.0",
+    "pi-openai-service-tier": "0.1.4"
+  },
+  "bundledDependencies": [
+    "@juicesharp/rpiv-todo",
+    "@koltmcbride/pi-loop",
+    "@lll9p/pi-better-compaction",
+    "@quintinshaw/pi-dynamic-workflows",
+    "pi-image-preview",
+    "pi-mcp-adapter",
+    "pi-multi-pass",
+    "pi-openai-service-tier"
+  ],
+  "peerDependencies": {
+    "@earendil-works/pi-agent-core": "*",
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": ">=0.82.0",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-agent-core": "0.82.0",
+    "@earendil-works/pi-ai": "0.82.0",
+    "@earendil-works/pi-coding-agent": "0.82.0",
+    "@earendil-works/pi-tui": "0.82.0",
+    "@types/node": "^22.19.0",
+    "tsx": "^4.22.1",
+    "typebox": "1.3.8",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts",
+    "smoke": "node test/package-smoke.mjs",
+    "smoke:trust": "node test/trust-smoke.mjs",
+    "smoke:production": "test/production-package-smoke.sh",
+    "verify": "npm run check && npm test && npm run smoke && npm run smoke:trust",
+    "verify:full": "npm run verify && npm run smoke:production"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}
