@@ -2,7 +2,12 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { Model } from "@earendil-works/pi-ai";
-import { createMeridianRefreshModels, loadMeridianProviderSnapshot } from "../src/meridian-refresh.ts";
+import {
+  MERIDIAN_REFRESH_STATUS_EVENT,
+  createMeridianRefreshModels,
+  loadMeridianProviderSnapshot,
+  type MeridianRefreshStatus,
+} from "../src/meridian-refresh.ts";
 
 const MODELS_PATH = join(homedir(), ".pi", "agent", "models.json");
 
@@ -23,9 +28,11 @@ export function registerMeridianRefresh(pi: ExtensionAPI, configPath = MODELS_PA
   if (!snapshot) return false;
   let resolvedHeaders: Record<string, string> | undefined;
   let refreshing = false;
+  const publishStatus = (status: MeridianRefreshStatus) => pi.events.emit(MERIDIAN_REFRESH_STATUS_EVENT, status);
   pi.registerProvider("meridian", {
     refreshModels: createMeridianRefreshModels(configPath, {
       getResolvedHeaders: () => resolvedHeaders,
+      onStatus: publishStatus,
     }),
   });
   const refreshActiveModel = async (model: Model<any> | undefined, ctx: ExtensionContext) => {
@@ -33,9 +40,33 @@ export function registerMeridianRefresh(pi: ExtensionAPI, configPath = MODELS_PA
     refreshing = true;
     try {
       const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
-      if (!auth.ok) return;
+      if (!auth.ok) {
+        publishStatus({
+          version: 1,
+          status: "failed",
+          source: "static",
+          timestamp: Date.now(),
+          modelCount: snapshot.models.length,
+          capabilityModelCount: 0,
+          error: "auth unavailable",
+        });
+        return;
+      }
       resolvedHeaders = auth.headers;
-      await ctx.modelRegistry.refresh();
+      try {
+        await ctx.modelRegistry.refresh();
+      } catch {
+        publishStatus({
+          version: 1,
+          status: "failed",
+          source: "static",
+          timestamp: Date.now(),
+          modelCount: snapshot.models.length,
+          capabilityModelCount: 0,
+          error: "config unavailable",
+        });
+        return;
+      }
       const refreshed = ctx.modelRegistry.find("meridian", model.id);
       if (refreshed && capabilitiesChanged(model, refreshed)) await pi.setModel(refreshed);
     } finally {

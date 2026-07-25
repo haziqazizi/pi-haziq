@@ -67,7 +67,7 @@ Inside Pi:
 /cohesion events
 ```
 
-The doctor reports expected tools, the active model/API, compaction strategy, service-tier state, active todo/workflow correlation, Herdr availability, and machine configuration presence.
+The doctor reports expected tools, the active model/API, compaction strategy, service-tier state, active todo/workflow correlation, Herdr availability, machine configuration presence, and the last Meridian refresh result with published/capability model counts and timestamp.
 
 Pi refreshes dynamic model providers during online startup, model-picker refresh, and `pi update`. Meridian discovery reads the global `~/.pi/agent/models.json` provider configuration only; project files cannot change its endpoint or credentials. Current Meridian `/v1/models` responses list model IDs, so local `contextWindow` and `maxTokens` values remain authoritative until Meridian publishes validated capability fields.
 

@@ -27,6 +27,12 @@ import {
   type ToolHealth,
   type WorkflowLink,
 } from "../src/cohesion.ts";
+import {
+  MERIDIAN_REFRESH_STATUS_EVENT,
+  formatMeridianRefreshStatus,
+  isMeridianRefreshStatus,
+  type MeridianRefreshStatus,
+} from "../src/meridian-refresh.ts";
 
 const EVENT_LOG_LIMIT = 100;
 const HERDR_METADATA_TTL_MS = 120_000;
@@ -97,6 +103,8 @@ export default function haziqCohesion(pi: ExtensionAPI) {
   let activeContext: ExtensionContext | undefined;
   let compactionConfig: CompactionConfigLike = {};
   let serviceTierConfig: ServiceTierConfigLike = {};
+  let meridianRefreshStatus: MeridianRefreshStatus | undefined;
+  let unsubscribeMeridianRefresh: (() => void) | undefined;
   let herdrMetadataInFlight = false;
   let herdrMetadataQueued = false;
   let herdrOperational: boolean | undefined;
@@ -117,6 +125,13 @@ export default function haziqCohesion(pi: ExtensionAPI) {
     if (eventLog.length > EVENT_LOG_LIMIT) eventLog = eventLog.slice(-EVENT_LOG_LIMIT);
     pi.events.emit(channel, event);
   }
+
+  unsubscribeMeridianRefresh = pi.events.on(MERIDIAN_REFRESH_STATUS_EVENT, (value) => {
+    if (!isMeridianRefreshStatus(value)) return;
+    meridianRefreshStatus = value;
+    eventLog.push(makeEvent(snapshot, "meridian", value));
+    if (eventLog.length > EVENT_LOG_LIMIT) eventLog = eventLog.slice(-EVENT_LOG_LIMIT);
+  });
 
   function persist() {
     pi.appendEntry(STATE_ENTRY_TYPE, snapshot);
@@ -285,6 +300,7 @@ export default function haziqCohesion(pi: ExtensionAPI) {
       ...(toolHealth.missing.length > 0 ? [`Missing: ${toolHealth.missing.join(", ")}`] : []),
       "",
       ...describeCapabilities(snapshot),
+      `Meridian refresh: ${formatMeridianRefreshStatus(meridianRefreshStatus)}`,
       "",
       `Active todo: ${snapshot.activeTodoId === undefined ? "none" : `#${snapshot.activeTodoId}`}`,
       `Running workflows: ${running.length === 0 ? "none" : running.join(", ")}`,
@@ -624,6 +640,8 @@ export default function haziqCohesion(pi: ExtensionAPI) {
   pi.on("session_shutdown", async (event) => {
     shuttingDown = true;
     herdrMetadataQueued = false;
+    unsubscribeMeridianRefresh?.();
+    unsubscribeMeridianRefresh = undefined;
     if (event.reason === "quit" && herdrEnabled && process.env.HERDR_PANE_ID) {
       try {
         await executeHerdr([

@@ -8,8 +8,11 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerMeridianRefresh } from "../extensions/haziq-meridian-refresh.ts";
 import {
   createMeridianRefreshModels,
+  formatMeridianRefreshStatus,
+  isMeridianRefreshStatus,
   loadMeridianProviderSnapshot,
   parseMeridianCatalog,
+  type MeridianRefreshStatus,
 } from "../src/meridian-refresh.ts";
 
 const staticModel = {
@@ -154,6 +157,28 @@ test("malformed, duplicate, empty, and unsafe capability catalogs fail closed", 
   );
 });
 
+test("formats and validates secret-safe refresh status", () => {
+  const status: MeridianRefreshStatus = {
+    version: 1,
+    status: "succeeded",
+    source: "network",
+    timestamp: Date.parse("2026-07-25T18:10:00.000Z"),
+    modelCount: 8,
+    capabilityModelCount: 8,
+  };
+  assert.equal(isMeridianRefreshStatus(status), true);
+  assert.equal(
+    formatMeridianRefreshStatus(status),
+    "network · 8 published models · 8 capability records · 2026-07-25T18:10:00.000Z",
+  );
+  assert.equal(isMeridianRefreshStatus({ ...status, modelCount: -1 }), false);
+  assert.equal(isMeridianRefreshStatus({ ...status, status: "failed", error: "untrusted\ntext" }), false);
+  assert.equal(
+    formatMeridianRefreshStatus({ ...status, status: "failed", error: "HTTP 4xx" }),
+    "failed (HTTP 4xx) · retained 8 models · 2026-07-25T18:10:00.000Z",
+  );
+});
+
 test("refresh uses resolved auth without logging or persisting secrets", async () => {
   await withConfig(modelsJson({ "CF-Access-Client-Id": "$CF_ID", "x-meridian-agent": "pi" }), async (path) => {
     let request: Request | undefined;
@@ -161,12 +186,20 @@ test("refresh uses resolved auth without logging or persisting secrets", async (
       request = new Request(input, init);
       return Response.json({ data: [{ id: "claude-opus-5" }] });
     }) as typeof fetch;
-    const refresh = createMeridianRefreshModels(path, { fetchImpl, env: { CF_ID: "test-access-id" } });
+    const statuses: MeridianRefreshStatus[] = [];
+    const refresh = createMeridianRefreshModels(path, {
+      fetchImpl,
+      env: { CF_ID: "test-access-id" },
+      onStatus: (status) => statuses.push(status),
+    });
     const models = await refresh(refreshContext(true));
     assert.equal(models.length, 1);
     assert.equal(request?.url, "https://meridian.example/v1/models");
     assert.equal(request?.headers.get("CF-Access-Client-Id"), "test-access-id");
     assert.equal(request?.headers.get("x-api-key"), "test-provider-key");
+    assert.deepEqual(statuses.map((status) => status.status), ["refreshing", "succeeded"]);
+    assert.equal(statuses[1]?.modelCount, 1);
+    assert.equal(statuses[1]?.capabilityModelCount, 0);
   });
 });
 
@@ -191,13 +224,16 @@ test("header commands and HTTP response bodies fail without exposing their value
   });
   await withConfig(modelsJson({}), async (path) => {
     const fetchImpl = (async () => new Response("provider-secret-body", { status: 403 })) as typeof fetch;
-    const refresh = createMeridianRefreshModels(path, { fetchImpl });
+    const statuses: MeridianRefreshStatus[] = [];
+    const refresh = createMeridianRefreshModels(path, { fetchImpl, onStatus: (status) => statuses.push(status) });
     await assert.rejects(refresh(refreshContext(true)), (error: unknown) => {
       assert.ok(error instanceof Error);
       assert.match(error.message, /HTTP 403/);
       assert.doesNotMatch(error.message, /provider-secret-body/);
       return true;
     });
+    assert.equal(statuses.at(-1)?.status, "failed");
+    assert.equal(statuses.at(-1)?.error, "HTTP 4xx");
   });
   await withConfig(modelsJson({}), async (path) => {
     const fetchImpl = (async () => new Response("x".repeat(1_000_001))) as typeof fetch;

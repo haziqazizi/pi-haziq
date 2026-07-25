@@ -127,9 +127,18 @@ try {
   assert.equal(state.data.model?.provider, "meridian");
   assert.equal(state.data.model?.id, "claude-opus-5");
   assert.equal(state.data.model?.contextWindow, 1_000_000);
+  child.stdin.write(`${JSON.stringify({ id: "doctor", type: "prompt", message: "/cohesion doctor" })}\n`);
+  assert.equal((await waitFor((event) => event.type === "response" && event.id === "doctor")).success, true);
+  const notice = await waitFor(
+    (event) => event.type === "extension_ui_request" && event.method === "notify" && event.message?.startsWith("Haziq cohesion:"),
+  );
+  assert.match(
+    notice.message,
+    /^Meridian refresh: (network|cache) · 2 published models · 2 capability records · \d{4}-\d{2}-\d{2}T/m,
+  );
   assert.equal(catalogRequests, 1);
   assert.equal(stderr.trim(), "");
-  console.log("Meridian package smoke: authenticated refresh published capability metadata without persisting credentials");
+  console.log("Meridian package smoke: authenticated refresh published capabilities and cohesion doctor status");
 } finally {
   child.kill("SIGTERM");
   await new Promise((resolveExit) => {
