@@ -370,9 +370,8 @@ export function createMeridianRefreshModels(
         }
         const headers = new Headers({ Accept: "application/json" });
         const resolvedHeaders = options.getResolvedHeaders?.();
-        if (options.getResolvedHeaders && Object.keys(snapshot.headers).length > 0 && !resolvedHeaders) {
-          throw new Error("Meridian refresh headers are unavailable");
-        }
+        // The model picker may refresh before session_start resolves Pi's provider headers.
+        // Fall back to safe literal/env references from the global config; command values remain rejected.
         for (const [name, value] of Object.entries(resolvedHeaders ?? snapshot.headers)) {
           headers.set(name, resolvedHeaders ? value : resolveHeaderValue(value, env));
         }

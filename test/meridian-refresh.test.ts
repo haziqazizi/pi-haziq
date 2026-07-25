@@ -203,6 +203,24 @@ test("refresh uses resolved auth without logging or persisting secrets", async (
   });
 });
 
+test("model-picker refresh can run before session headers are resolved", async () => {
+  await withConfig(modelsJson({ "CF-Access-Client-Id": "literal-access-id" }), async (path) => {
+    let request: Request | undefined;
+    const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
+      request = new Request(input, init);
+      return Response.json({ data: [{ id: "claude-opus-5" }] });
+    }) as typeof fetch;
+    const refresh = createMeridianRefreshModels(path, {
+      fetchImpl,
+      getResolvedHeaders: () => undefined,
+    });
+    const models = await refresh(refreshContext(true));
+    assert.equal(models.length, 1);
+    assert.equal(request?.headers.get("CF-Access-Client-Id"), "literal-access-id");
+    assert.equal(request?.headers.get("x-api-key"), "test-provider-key");
+  });
+});
+
 test("offline refresh preserves static models and does not call the network", async () => {
   await withConfig(modelsJson(), async (path) => {
     let called = false;

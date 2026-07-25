@@ -58,6 +58,22 @@ await writeFile(
           },
         ],
       },
+      tokenmaxxing: {
+        baseUrl: "https://tokenmaxxing.example",
+        api: "openai-responses",
+        apiKey: "test-tokenmaxxing-key",
+        models: [
+          {
+            id: "gpt-5.6-sol",
+            name: "GPT-5.6 Sol",
+            reasoning: true,
+            input: ["text", "image"],
+            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+            contextWindow: 372_000,
+            maxTokens: 128_000,
+          },
+        ],
+      },
     },
   }),
 );
@@ -115,13 +131,15 @@ try {
   child.stdin.write(`${JSON.stringify({ id: "models", type: "get_available_models" })}\n`);
   const response = await waitFor((event) => event.type === "response" && event.id === "models");
   assert.equal(response.success, true);
-  const models = response.data.models.filter((model) => model.provider === "meridian");
+  const allModels = response.data.models;
+  const models = allModels.filter((model) => model.provider === "meridian");
   const opus = models.find((model) => model.id === "claude-opus-5");
   const added = models.find((model) => model.id === "claude-new-5");
   assert.equal(opus?.contextWindow, 1_000_000);
   assert.equal(opus?.maxTokens, 128_000);
   assert.equal(added?.contextWindow, 500_000);
   assert.equal(added?.maxTokens, 64_000);
+  assert.ok(allModels.some((model) => model.provider === "tokenmaxxing" && model.id === "gpt-5.6-sol"));
   child.stdin.write(`${JSON.stringify({ id: "state", type: "get_state" })}\n`);
   const state = await waitFor((event) => event.type === "response" && event.id === "state");
   assert.equal(state.data.model?.provider, "meridian");
