@@ -28,6 +28,8 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 
 `extensions/haziq-cohesion.ts` observes their public Pi surfaces and emits normalized `haziq:*` lifecycle events. It does not reimplement their algorithms.
 
+`extensions/haziq-loop.ts` is a compatibility wrapper around pi-loop 0.2.0. It preserves upstream behavior while releasing shared event-bus subscriptions during `/reload`, preventing duplicate loop delivery across extension generations.
+
 ## Development
 
 ```bash

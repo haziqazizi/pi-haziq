@@ -16,7 +16,7 @@
   "pi": {
     "extensions": [
       "./node_modules/pi-multi-pass/extensions",
-      "./node_modules/@koltmcbride/pi-loop/loop.ts",
+      "./extensions/haziq-loop.ts",
       "./node_modules/@juicesharp/rpiv-todo/index.ts",
       "./node_modules/pi-openai-service-tier/index.ts",
       "./node_modules/pi-image-preview/index.ts",
@@ -71,7 +71,9 @@
     "check": "tsc --noEmit",
     "test": "node --import tsx --test test/*.test.ts",
     "smoke": "node test/package-smoke.mjs",
-    "verify": "npm run check && npm test && npm run smoke"
+    "smoke:production": "test/production-package-smoke.sh",
+    "verify": "npm run check && npm test && npm run smoke",
+    "verify:full": "npm run verify && npm run smoke:production"
   },
   "engines": {
     "node": ">=22.19.0"

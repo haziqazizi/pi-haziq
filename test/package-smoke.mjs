@@ -113,11 +113,23 @@ try {
   assert.match(notice.message, /^Tools: 8\/8$/m);
   assert.match(notice.message, /^Herdr: not active$/m);
 
+  send({ id: "reload", type: "prompt", message: "/cohesion reload" });
+  const reload = await waitFor((event) => event.type === "response" && event.id === "reload");
+  assert.equal(reload.success, true);
+
+  send({ id: "commands-after-reload", type: "get_commands" });
+  const afterReload = await waitFor(
+    (event) => event.type === "response" && event.id === "commands-after-reload",
+  );
+  assert.equal(afterReload.success, true);
+  const afterNames = afterReload.data.commands.map((command) => command.name);
+  assert.equal(afterNames.filter((name) => name === "cohesion").length, 1, "reload must not duplicate cohesion");
+
   const extensionErrors = events.filter((event) => event.type === "extension_error");
   assert.deepEqual(extensionErrors, []);
   assert.equal(stderr.trim(), "", `unexpected stderr: ${stderr}`);
 
-  console.log("package smoke: healthy, 8/8 tools, no duplicate cohesion command, no extension errors");
+  console.log("package smoke: healthy, 8/8 tools, reload-safe, no duplicate cohesion command, no extension errors");
 } finally {
   child.kill("SIGTERM");
   await new Promise((resolveExit) => {

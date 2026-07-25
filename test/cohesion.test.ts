@@ -7,11 +7,14 @@ import {
   allVisibleTodosCompleted,
   createSnapshot,
   deriveCapabilities,
+  execResultSucceeded,
   extractWorkflowDelivery,
   extractWorkflowRunId,
   inspectTools,
+  normalizeWorkflowStatus,
   restoreLatestSnapshot,
   runningWorkflowIds,
+  selectWorkflowTodoId,
   upsertWorkflow,
   workflowInstruction,
 } from "../src/cohesion.ts";
@@ -109,6 +112,27 @@ test("extracts completed, failed, and paused background deliveries", () => {
   });
 });
 
+test("selects workflow todo deterministically and declines ambiguous pending links", () => {
+  assert.equal(selectWorkflowTodoId(4, []), 4);
+  assert.equal(selectWorkflowTodoId(4, [7]), 7);
+  assert.equal(selectWorkflowTodoId(4, [7, 8]), undefined);
+  assert.equal(selectWorkflowTodoId(4, [7, 7]), 7);
+});
+
+test("normalizes public workflow control statuses", () => {
+  assert.equal(normalizeWorkflowStatus("running"), "running");
+  assert.equal(normalizeWorkflowStatus("paused"), "paused");
+  assert.equal(normalizeWorkflowStatus("pending"), "paused");
+  assert.equal(normalizeWorkflowStatus("aborted"), "stopped");
+  assert.equal(normalizeWorkflowStatus("unknown"), undefined);
+});
+
+test("classifies Herdr command results without trusting environment presence", () => {
+  assert.equal(execResultSucceeded({ code: 0, killed: false }), true);
+  assert.equal(execResultSucceeded({ code: 1, killed: false }), false);
+  assert.equal(execResultSucceeded({ code: 0, killed: true }), false);
+});
+
 test("derives active and completed todo state from public tool details", () => {
   const details = {
     tasks: [
@@ -137,6 +161,14 @@ test("restores only the latest compatible cohesion snapshot", () => {
     { type: "custom", customType: STATE_ENTRY_TYPE, data: latest },
   ]);
   assert.equal(restored.activeTodoId, 2);
+});
+
+test("branch reconstruction does not carry abandoned branch state", () => {
+  const branchA = [{ type: "custom", customType: STATE_ENTRY_TYPE, data: createSnapshot({ activeTodoId: 11 }) }];
+  const branchB = [{ type: "custom", customType: STATE_ENTRY_TYPE, data: createSnapshot({ activeTodoId: 22 }) }];
+  assert.equal(restoreLatestSnapshot(branchA).activeTodoId, 11);
+  assert.equal(restoreLatestSnapshot(branchB).activeTodoId, 22);
+  assert.equal(restoreLatestSnapshot([]).activeTodoId, undefined);
 });
 
 test("tracks workflow state and provides proof-aware instructions", () => {

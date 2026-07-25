@@ -92,6 +92,10 @@ export interface WorkflowDelivery {
 
 const RESPONSES_APIS = new Set(["openai-responses", "openai-codex-responses"]);
 
+export function execResultSucceeded(result: { code: number; killed?: boolean }): boolean {
+  return result.code === 0 && result.killed !== true;
+}
+
 export function canonicalModel(model: ModelLike | undefined): string | undefined {
   if (!model?.provider || !model.id) return undefined;
   return `${model.provider}/${model.id}`;
@@ -182,6 +186,31 @@ export function extractWorkflowDelivery(content: string): WorkflowDelivery | und
   if (paused) return { runId: paused[1], status: "paused" };
 
   return undefined;
+}
+
+export function selectWorkflowTodoId(activeTodoId: number | undefined, pendingCandidates: Iterable<number>): number | undefined {
+  const candidates = [...new Set(pendingCandidates)];
+  if (candidates.length === 1) return candidates[0];
+  if (candidates.length > 1) return undefined;
+  return activeTodoId;
+}
+
+export function normalizeWorkflowStatus(status: unknown): WorkflowStatus | undefined {
+  switch (status) {
+    case "running":
+      return "running";
+    case "completed":
+      return "completed";
+    case "failed":
+      return "failed";
+    case "paused":
+    case "pending":
+      return "paused";
+    case "aborted":
+      return "stopped";
+    default:
+      return undefined;
+  }
 }
 
 export function activeTodoIdFromDetails(details: unknown): number | undefined {

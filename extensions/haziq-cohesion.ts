@@ -1,19 +1,22 @@
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, join } from "node:path";
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { CONFIG_DIR_NAME, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
 import {
   STATE_ENTRY_TYPE,
   activeTodoIdFromDetails,
   allVisibleTodosCompleted,
   createSnapshot,
   deriveCapabilities,
+  execResultSucceeded,
   extractWorkflowDelivery,
   extractWorkflowRunId,
   inspectTools,
   makeEvent,
+  normalizeWorkflowStatus,
   restoreLatestSnapshot,
   runningWorkflowIds,
+  selectWorkflowTodoId,
   textFromToolContent,
   upsertWorkflow,
   workflowInstruction,
@@ -96,7 +99,11 @@ export default function haziqCohesion(pi: ExtensionAPI) {
   let serviceTierConfig: ServiceTierConfigLike = {};
   let herdrMetadataInFlight = false;
   let herdrMetadataQueued = false;
+  let herdrOperational: boolean | undefined;
   let shuttingDown = false;
+  let pendingTodoClearsActive = false;
+  const pendingTodoCandidates = new Set<number>();
+  const workflowTodoByCall = new Map<string, number | undefined>();
 
   const herdrEnabled =
     process.env.HERDR_ENV === "1" &&
@@ -115,17 +122,33 @@ export default function haziqCohesion(pi: ExtensionAPI) {
     pi.appendEntry(STATE_ENTRY_TYPE, snapshot);
   }
 
-  function loadConfigs() {
+  function loadConfigs(ctx = activeContext) {
     compactionConfig = readJson<CompactionConfigLike>(BETTER_COMPACTION_CONFIG) ?? {};
-    serviceTierConfig = readJson<ServiceTierConfigLike>(SERVICE_TIER_CONFIG) ?? {};
+    const globalTier = readJson<ServiceTierConfigLike>(SERVICE_TIER_CONFIG) ?? {};
+    const projectTierPath = ctx ? join(ctx.cwd, CONFIG_DIR_NAME, "extensions", "pi-openai-service-tier.json") : undefined;
+    const projectTier =
+      ctx && ctx.isProjectTrusted() && projectTierPath
+        ? (readJson<ServiceTierConfigLike>(projectTierPath) ?? {})
+        : {};
+    serviceTierConfig = { ...globalTier, ...projectTier };
   }
 
   function refreshCapabilities(ctx: ExtensionContext) {
-    loadConfigs();
+    loadConfigs(ctx);
     snapshot = {
       ...snapshot,
       capabilities: deriveCapabilities(ctx.model, compactionConfig, serviceTierConfig),
     };
+  }
+
+  function restoreBranchState(ctx: ExtensionContext) {
+    snapshot = restoreLatestSnapshot(ctx.sessionManager.getBranch());
+    snapshot = {
+      ...snapshot,
+      sessionId: ctx.sessionManager.getSessionId(),
+      cwd: ctx.cwd,
+    };
+    refreshCapabilities(ctx);
   }
 
   function refreshToolHealth() {
@@ -187,7 +210,11 @@ export default function haziqCohesion(pi: ExtensionAPI) {
       "--ttl-ms",
       String(HERDR_METADATA_TTL_MS),
     ];
-    await pi.exec("herdr", args, { timeout: 5_000 });
+    const result = await pi.exec("herdr", args, { timeout: 5_000 });
+    if (!execResultSucceeded(result)) {
+      throw new Error(`Herdr metadata command failed (code ${result.code}${result.killed ? ", killed" : ""})`);
+    }
+    herdrOperational = true;
   }
 
   function queueHerdrMetadata() {
@@ -202,6 +229,7 @@ export default function haziqCohesion(pi: ExtensionAPI) {
           await writeHerdrMetadata();
         }
       } catch (error) {
+        herdrOperational = false;
         emit("haziq:herdr-failed", "herdr", {
           operation: "pane.report-metadata",
           error: error instanceof Error ? error.message : String(error),
@@ -246,7 +274,7 @@ export default function haziqCohesion(pi: ExtensionAPI) {
       "",
       `Active todo: ${snapshot.activeTodoId === undefined ? "none" : `#${snapshot.activeTodoId}`}`,
       `Running workflows: ${running.length === 0 ? "none" : running.join(", ")}`,
-      `Herdr: ${herdrEnabled ? "connected environment" : "not active"}`,
+      `Herdr: ${!herdrEnabled ? "not active" : herdrOperational === false ? "failed" : herdrOperational === true ? "connected" : "detecting"}`,
       "",
       "Config",
       configStatus(BETTER_COMPACTION_CONFIG, Boolean(readJson(BETTER_COMPACTION_CONFIG))),
@@ -265,6 +293,10 @@ export default function haziqCohesion(pi: ExtensionAPI) {
         ctx.ui.notify(recent.length > 0 ? recent.join("\n") : "No cohesion events recorded", "info");
         return;
       }
+      if (action === "reload") {
+        await ctx.reload();
+        return;
+      }
       if (action === "doctor" || action === "status") {
         refreshToolHealth();
         refreshCapabilities(ctx);
@@ -273,21 +305,15 @@ export default function haziqCohesion(pi: ExtensionAPI) {
         ctx.ui.notify(doctorReport(), toolHealth.status === "healthy" ? "info" : "warning");
         return;
       }
-      ctx.ui.notify("Usage: /cohesion [status|doctor|events]", "warning");
+      ctx.ui.notify("Usage: /cohesion [status|doctor|events|reload]", "warning");
     },
   });
 
   pi.on("session_start", (event, ctx) => {
     shuttingDown = false;
     activeContext = ctx;
-    snapshot = restoreLatestSnapshot(ctx.sessionManager.getBranch());
-    snapshot = {
-      ...snapshot,
-      sessionId: ctx.sessionManager.getSessionId(),
-      cwd: ctx.cwd,
-    };
+    restoreBranchState(ctx);
     refreshToolHealth();
-    refreshCapabilities(ctx);
     persist();
     updateStatus(ctx);
     queueHerdrMetadata();
@@ -299,6 +325,20 @@ export default function haziqCohesion(pi: ExtensionAPI) {
     if (toolHealth.status === "degraded" && ctx.hasUI) {
       ctx.ui.notify(`Haziq cohesion degraded; missing tools: ${toolHealth.missing.join(", ")}`, "warning");
     }
+  });
+
+  pi.on("session_tree", (event, ctx) => {
+    activeContext = ctx;
+    pendingTodoCandidates.clear();
+    pendingTodoClearsActive = false;
+    workflowTodoByCall.clear();
+    restoreBranchState(ctx);
+    updateStatus(ctx);
+    queueHerdrMetadata();
+    emit("haziq:session-tree-changed", "pi", {
+      oldLeafId: event.oldLeafId,
+      newLeafId: event.newLeafId,
+    });
   });
 
   pi.on("model_select", (event, ctx) => {
@@ -319,10 +359,29 @@ export default function haziqCohesion(pi: ExtensionAPI) {
     queueHerdrMetadata();
   });
 
+  pi.on("turn_start", () => {
+    pendingTodoCandidates.clear();
+    pendingTodoClearsActive = false;
+    workflowTodoByCall.clear();
+  });
+
   pi.on("tool_execution_start", (event, ctx) => {
     activeContext = ctx;
+    if (event.toolName === "todo" && event.args && typeof event.args === "object") {
+      const args = event.args as { action?: unknown; id?: unknown; status?: unknown };
+      if (args.action === "update" && typeof args.id === "number") {
+        if (args.status === "in_progress") pendingTodoCandidates.add(args.id);
+        if (args.id === snapshot.activeTodoId && (args.status === "completed" || args.status === "deleted")) {
+          pendingTodoClearsActive = true;
+        }
+      }
+    }
     if (event.toolName === "workflow") {
-      emit("haziq:workflow-requested", "workflow", { toolCallId: event.toolCallId });
+      const todoId = pendingTodoClearsActive
+        ? selectWorkflowTodoId(undefined, pendingTodoCandidates)
+        : selectWorkflowTodoId(snapshot.activeTodoId, pendingTodoCandidates);
+      workflowTodoByCall.set(event.toolCallId, todoId);
+      emit("haziq:workflow-requested", "workflow", { toolCallId: event.toolCallId }, { taskId: todoId });
     } else if (mcpToolNames.has(event.toolName)) {
       emit("haziq:mcp-started", "mcp", {
         toolCallId: event.toolCallId,
@@ -351,19 +410,45 @@ export default function haziqCohesion(pi: ExtensionAPI) {
       return undefined;
     }
 
+    if (event.toolName === "workflow_control" && !event.isError) {
+      const details = recordDetails(event.details);
+      const run = recordDetails(details.run);
+      const runId = typeof run.runId === "string" ? run.runId : undefined;
+      const status = normalizeWorkflowStatus(run.status);
+      if (runId && status) {
+        const existing = snapshot.workflows[runId];
+        upsertRun({
+          runId,
+          todoId: existing?.todoId,
+          toolCallId: existing?.toolCallId,
+          background: existing?.background,
+          status,
+        });
+        emit(`haziq:workflow-${status}`, "workflow", {
+          action: details.action,
+          result: details.result,
+        }, { runId, taskId: existing?.todoId });
+      }
+      return undefined;
+    }
+
     if (event.toolName !== "workflow" || event.isError) return undefined;
     const runId = extractWorkflowRunId(event.details, event.content);
-    if (!runId) return undefined;
+    if (!runId) {
+      workflowTodoByCall.delete(event.toolCallId);
+      return undefined;
+    }
     const details = recordDetails(event.details);
     const background = details.background === true;
     const link: WorkflowLink = {
       runId,
       toolCallId: event.toolCallId,
-      todoId: snapshot.activeTodoId,
+      todoId: workflowTodoByCall.get(event.toolCallId),
       status: background ? "running" : "completed",
       background,
       updatedAt: Date.now(),
     };
+    workflowTodoByCall.delete(event.toolCallId);
     upsertRun(link);
     emit(background ? "haziq:workflow-started" : "haziq:workflow-completed", "workflow", {
       toolCallId: event.toolCallId,
@@ -385,9 +470,11 @@ export default function haziqCohesion(pi: ExtensionAPI) {
   pi.on("tool_execution_end", (event, ctx) => {
     activeContext = ctx;
     if (event.toolName === "workflow" && event.isError) {
+      const todoId = workflowTodoByCall.get(event.toolCallId);
+      workflowTodoByCall.delete(event.toolCallId);
       emit("haziq:workflow-request-failed", "workflow", {
         toolCallId: event.toolCallId,
-      }, { taskId: snapshot.activeTodoId });
+      }, { taskId: todoId });
     } else if (event.toolName === "workflow_control") {
       emit("haziq:workflow-control", "workflow", {
         toolCallId: event.toolCallId,
@@ -466,6 +553,33 @@ export default function haziqCohesion(pi: ExtensionAPI) {
       willRetry: event.willRetry,
     });
     queueHerdrMetadata();
+  });
+
+  pi.on("before_provider_request", (event, ctx) => {
+    activeContext = ctx;
+    const payload = recordDetails(event.payload);
+    const tier = typeof payload.service_tier === "string" ? payload.service_tier : undefined;
+    const capabilities = snapshot.capabilities;
+    const previousActive = capabilities?.serviceTier;
+    const previousTier = capabilities?.serviceTierName;
+    if (capabilities && (previousActive !== Boolean(tier) || previousTier !== tier)) {
+      snapshot = {
+        ...snapshot,
+        capabilities: {
+          ...capabilities,
+          serviceTier: Boolean(tier),
+          serviceTierName: tier,
+        },
+      };
+      persist();
+      emit("haziq:service-tier-observed", "service-tier", {
+        active: Boolean(tier),
+        tier,
+        model: capabilities.model,
+      });
+      queueHerdrMetadata();
+    }
+    return undefined;
   });
 
   pi.on("after_provider_response", (event, ctx) => {
