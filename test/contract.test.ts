@@ -18,6 +18,19 @@ test("the extension composes the package contract when project or CLI append tex
   assert.equal(appendPiHaziqContract(composed, policy), composed, "contract must not duplicate across turns or reloads");
 });
 
+test("APPEND_SYSTEM requires efficient planning and a risk-first delivery sequence", async () => {
+  const policy = await readFile(join(root, "APPEND_SYSTEM.md"), "utf8");
+  const guidance = policy
+    .match(/When a non-trivial build outcome is clear,[\s\S]+?(?=\n\n## Authoring and publication)/)?.[0]
+    .trim();
+  const expected = [
+    "When a non-trivial build outcome is clear, first run a bounded planning workflow to identify the most efficient safe path, explicitly considering dynamic workflows, recursive decomposition only for context overflow, parallel subagents, critical-path dependencies, coordination cost, and proof gates.",
+    "Sequence implementation risk-first through contracts and a thin end-to-end slice, parallelize only isolated work, integrate and verify continuously, and prefer the plan that minimizes expected wall-clock time, compute, coordination, and rework—even when that plan is one agent working directly.",
+  ].join(" ");
+  assert.equal(guidance, expected, "efficient build-path guidance must remain exact and complete");
+  assert.equal(guidance.match(/[.!?](?: |$)/g)?.length, 2, "guidance must remain exactly two sentences");
+});
+
 test("APPEND_SYSTEM freezes the approved update, reload, setup, publication, and secret boundaries", async () => {
   const policy = await readFile(join(root, "APPEND_SYSTEM.md"), "utf8");
   assert.match(policy, /<!-- PI_HAZIQ_CONTRACT_V1 -->/);

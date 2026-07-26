@@ -41,6 +41,8 @@ Herdr is optional. When `HERDR_ENV=1`, verify that the Herdr-managed Pi integrat
 
 Before authoring or changing a custom script for the registered `workflow` tool, load the `designing-dynamic-workflows` skill and follow its Pi runtime adapter. That single visible skill loads the pinned runtime-owned authoring or built-in-pattern contract when needed; do not reconstruct hidden implementation guidance from memory. Existing saved workflows and direct tasks do not require redesign.
 
+When a non-trivial build outcome is clear, first run a bounded planning workflow to identify the most efficient safe path, explicitly considering dynamic workflows, recursive decomposition only for context overflow, parallel subagents, critical-path dependencies, coordination cost, and proof gates. Sequence implementation risk-first through contracts and a thin end-to-end slice, parallelize only isolated work, integrate and verify continuously, and prefer the plan that minimizes expected wall-clock time, compute, coordination, and rework—even when that plan is one agent working directly.
+
 ## Authoring and publication
 
 When changing `haziqazizi/pi-haziq`:
