@@ -37,6 +37,10 @@ Then start Pi, run `/cohesion setup`, approve its preview, and run `/reload`. Pr
 
 Herdr is optional. When `HERDR_ENV=1`, verify that the Herdr-managed Pi integration is current through Herdr's supported integration command. Never vendor or edit `~/.pi/agent/extensions/herdr-agent-state.ts` from this package.
 
+## Dynamic workflow authoring
+
+Before authoring or changing a custom script for the registered `workflow` tool, load the `designing-dynamic-workflows` skill and follow its Pi runtime adapter. That single visible skill loads the pinned runtime-owned authoring or built-in-pattern contract when needed; do not reconstruct hidden implementation guidance from memory. Existing saved workflows and direct tasks do not require redesign.
+
 ## Authoring and publication
 
 When changing `haziqazizi/pi-haziq`:

@@ -24,18 +24,21 @@
       "./extensions/haziq-mcp.ts",
       "./node_modules/@lll9p/pi-better-compaction/index.ts",
       "./node_modules/@quintinshaw/pi-dynamic-workflows/extensions/workflow.ts",
+      "./extensions/haziq-fabric.ts",
       "./extensions/haziq-cohesion.ts"
     ],
     "skills": [
-      "./node_modules/@quintinshaw/pi-dynamic-workflows/skills/workflow-authoring",
-      "./node_modules/@quintinshaw/pi-dynamic-workflows/skills/workflow-patterns"
+      "./node_modules/@haziqazizi/designing-dynamic-workflows",
+      "./node_modules/pi-fabric/skills/fabric-exec"
     ]
   },
   "dependencies": {
+    "@haziqazizi/designing-dynamic-workflows": "https://github.com/haziqazizi/designing-dynamic-workflows/archive/c00a3dca42042f4eef51d7ed253643d00aae6ac3.tar.gz",
     "@juicesharp/rpiv-todo": "2.1.0",
     "@koltmcbride/pi-loop": "0.2.0",
     "@lll9p/pi-better-compaction": "0.2.1",
     "@quintinshaw/pi-dynamic-workflows": "3.4.1",
+    "pi-fabric": "0.28.1",
     "pi-image-preview": "0.1.5",
     "pi-mcp-adapter": "2.14.0",
     "pi-multi-pass": "1.3.0",
@@ -49,7 +52,9 @@
     "pi-image-preview",
     "pi-mcp-adapter",
     "pi-multi-pass",
-    "pi-openai-service-tier"
+    "pi-openai-service-tier",
+    "@haziqazizi/designing-dynamic-workflows",
+    "pi-fabric"
   ],
   "peerDependencies": {
     "@earendil-works/pi-agent-core": "*",
@@ -80,7 +85,7 @@
     "verify:full": "npm run verify && npm run smoke:production && npm run audit:production"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=24"
   },
   "overrides": {
     "@hono/node-server": "1.19.15"

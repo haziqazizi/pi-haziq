@@ -16,7 +16,7 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 - Keep every Pi session on the reviewed package revision through an instruction-driven `APPEND_SYSTEM.md` contract.
 - Apply approved non-secret configuration through an explicit, previewed, and reversible `/cohesion setup` command.
 
-## Bundled extensions
+## Bundled components
 
 | Package | Pin | Responsibility |
 |---|---:|---|
@@ -28,11 +28,18 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 | `pi-mcp-adapter` | 2.14.0 | MCP gateway and server tools |
 | `@lll9p/pi-better-compaction` | 0.2.1 | Native Responses compact plus delegated fallback |
 | `@quintinshaw/pi-dynamic-workflows` | 3.4.1 | Journaled multi-agent workflows |
+| `@haziqazizi/designing-dynamic-workflows` | `c00a3dca` | Single visible workflow-design skill with pinned runtime adapters |
+| `pi-fabric` | 0.28.1 | Type-checked tool runtime; only `fabric-exec` is advertised as a skill |
 
-`extensions/haziq-cohesion.ts` observes their public Pi surfaces and emits normalized `haziq:*` lifecycle events. It does not reimplement their algorithms.
+Fabric's separate worker process intentionally carries its reviewed `@earendil-works/pi-ai@0.80.6` runtime dependency; upstream's package-manifest test rejects moving it to a host peer because the standalone worker imports it directly. Production smoke pins that sole core-runtime exception and rejects any expansion.
+
+`extensions/haziq-cohesion.ts` observes their public Pi surfaces and emits normalized `haziq:*` lifecycle events. It does not reimplement their algorithms. Quintin's `workflow-authoring` and `workflow-patterns` files remain bundled as runtime-owned references but are not separately advertised to the model; `designing-dynamic-workflows` loads the relevant one only when needed. Fabric's advanced skills are likewise not registered.
+
+This package requires Node.js 24 or newer because Fabric's sandbox runtime does.
 
 Compatibility wrappers preserve upstream behavior while closing integration seams:
 
+- `extensions/haziq-fabric.ts` keeps Fabric's advanced skills out of automatic discovery, preserves only the package-allowlisted `fabric-exec` skill, and emits a names-only captured-tool inventory so cohesion can verify health without exposing schemas.
 - `extensions/haziq-loop.ts` releases shared event-bus subscriptions during `/reload`, preventing duplicate loop delivery across extension generations.
 - `extensions/haziq-meridian-refresh.ts` attaches Pi's `refreshModels` hook to a globally configured Meridian provider. ID-only catalogs filter the trusted static models; bounded capability metadata can update limits or add models. Offline, malformed, empty, duplicate, and unreachable catalogs retain the static last-known-good list. Credentials and response bodies are never logged or persisted.
 - `extensions/haziq-mcp.ts` delays MCP configuration until `session_start` and excludes project MCP sources unless Pi marks the project trusted, preventing untrusted eager stdio execution.
