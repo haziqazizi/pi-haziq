@@ -176,17 +176,17 @@ try {
   assert.equal(commands.success, true);
   const names = commands.data.commands.map((command) => command.name);
   assert.equal(names.filter((name) => name === "cohesion").length, 1, "cohesion command must load exactly once");
-  assert.ok(names.includes("workflows"));
+  assert.equal(names.includes("workflows"), false, "Quintin workflow command must be unregistered");
   assert.ok(names.includes("todos"));
   assert.ok(names.includes("mcp"));
   assert.ok(names.includes("fabric"));
   assert.ok(names.includes("skill:designing-dynamic-workflows"));
   assert.equal(names.includes("skill:workflow-authoring"), false);
   assert.equal(names.includes("skill:workflow-patterns"), false);
-  assert.deepEqual(
-    names.filter((name) => name.startsWith("skill:fabric-")).sort(),
-    ["skill:fabric-exec"],
-  );
+  const fabricSkills = names.filter((name) => name.startsWith("skill:fabric-")).sort();
+  assert.ok(fabricSkills.includes("skill:fabric-exec"), "fabric-exec must load (model-invoked)");
+  assert.ok(fabricSkills.includes("skill:fabric-guide"), "fabric-guide router must load");
+  assert.ok(fabricSkills.length >= 12, `expected the full Fabric skill set, got ${fabricSkills.length}`);
 
   await new Promise((resolveWait) => setTimeout(resolveWait, 500));
   assert.equal(existsSync(trustedMarker), true, "trusted project MCP config did not initialize");
@@ -198,7 +198,7 @@ try {
     (event) => event.type === "extension_ui_request" && event.method === "notify" && event.message?.startsWith("Haziq cohesion:"),
   );
   assert.match(notice.message, /^Haziq cohesion: healthy/m);
-  assert.match(notice.message, /^Tools: 8\/8 · Fabric-captured$/m);
+  assert.match(notice.message, /^Tools: 6\/6 · Fabric-captured$/m);
   assert.match(notice.message, /^Herdr: not active$/m);
   assert.match(notice.message, /APPEND_SYSTEM\.md$/m);
 
@@ -212,15 +212,13 @@ try {
       event.type === "extension_ui_request" &&
       event.method === "notify" &&
       typeof event.message === "string" &&
-      event.message.includes("workflow_control"),
+      event.message.includes("schedule_loop_wakeup"),
   );
   const capturedNames = new Set(
     capturedNotice.message.split("\n").map((line) => line.split(" ", 1)[0]),
   );
   for (const name of [
     "todo",
-    "workflow",
-    "workflow_control",
     "mcp",
     "LoopCreate",
     "LoopList",
@@ -262,10 +260,10 @@ try {
   const afterNames = afterReload.data.commands.map((command) => command.name);
   assert.equal(afterNames.filter((name) => name === "cohesion").length, 1, "reload must not duplicate cohesion");
   assert.ok(afterNames.includes("skill:designing-dynamic-workflows"));
-  assert.deepEqual(
-    afterNames.filter((name) => name.startsWith("skill:fabric-")).sort(),
-    ["skill:fabric-exec"],
-  );
+  const afterFabricSkills = afterNames.filter((name) => name.startsWith("skill:fabric-")).sort();
+  assert.ok(afterFabricSkills.includes("skill:fabric-exec"), "fabric-exec must reload");
+  assert.ok(afterFabricSkills.includes("skill:fabric-guide"), "fabric-guide must reload");
+  assert.ok(afterFabricSkills.length >= 12, "full Fabric skill set must survive reload");
   assert.equal(afterNames.includes("skill:workflow-authoring"), false);
   assert.equal(afterNames.includes("skill:workflow-patterns"), false);
 
@@ -300,7 +298,7 @@ try {
     `unexpected stderr: ${stderr}`,
   );
 
-  console.log("package smoke: healthy, one visible workflow skill, 8/8 tools captured by Fabric, appended contract reached provider exactly once beside project policy, setup check read-only, trusted MCP initialized, reload-safe, no duplicates or extension errors");
+  console.log("package smoke: healthy, full Fabric skill set, 6/6 tools captured by Fabric, appended contract reached provider exactly once beside project policy, setup check read-only, trusted MCP initialized, reload-safe, no duplicates or extension errors");
 } finally {
   child.kill("SIGTERM");
   await new Promise((resolveExit) => {

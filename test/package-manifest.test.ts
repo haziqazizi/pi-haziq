@@ -12,19 +12,19 @@ const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
   engines: { node: string };
 };
 
-test("package advertises one workflow skill and Fabric core only", () => {
+test("package advertises the doctrine skill plus the full Fabric skill set; workflow tool unregistered", () => {
   assert.deepEqual(pkg.pi.skills, [
     "./node_modules/@haziqazizi/designing-dynamic-workflows",
-    "./node_modules/pi-fabric/skills/fabric-exec",
+    "./node_modules/pi-fabric/skills",
   ]);
   assert.equal(
     pkg.pi.skills.some((path) => path.includes("pi-dynamic-workflows/skills/")),
     false,
   );
-  assert.ok(pkg.pi.extensions.includes("./node_modules/@quintinshaw/pi-dynamic-workflows/extensions/workflow.ts"));
+  assert.equal(pkg.pi.extensions.includes("./node_modules/@quintinshaw/pi-dynamic-workflows/extensions/workflow.ts"), false);
   assert.ok(pkg.pi.extensions.includes("./extensions/haziq-fabric.ts"));
   assert.equal(pkg.pi.extensions.includes("./node_modules/pi-fabric/dist/index.js"), false);
-  assert.equal(pkg.dependencies["pi-fabric"], "0.28.1");
+  assert.equal(pkg.dependencies["pi-fabric"], "git+https://github.com/haziqazizi/pi-fabric.git#0fade64");
   assert.equal(pkg.engines.node, ">=24");
   assert.ok(pkg.bundledDependencies.includes("@haziqazizi/designing-dynamic-workflows"));
   assert.ok(pkg.bundledDependencies.includes("pi-fabric"));

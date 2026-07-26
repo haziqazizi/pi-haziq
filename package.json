@@ -23,13 +23,12 @@
       "./node_modules/pi-image-preview/index.ts",
       "./extensions/haziq-mcp.ts",
       "./node_modules/@lll9p/pi-better-compaction/index.ts",
-      "./node_modules/@quintinshaw/pi-dynamic-workflows/extensions/workflow.ts",
       "./extensions/haziq-fabric.ts",
       "./extensions/haziq-cohesion.ts"
     ],
     "skills": [
       "./node_modules/@haziqazizi/designing-dynamic-workflows",
-      "./node_modules/pi-fabric/skills/fabric-exec"
+      "./node_modules/pi-fabric/skills"
     ]
   },
   "dependencies": {
@@ -38,7 +37,7 @@
     "@koltmcbride/pi-loop": "0.2.0",
     "@lll9p/pi-better-compaction": "0.2.1",
     "@quintinshaw/pi-dynamic-workflows": "3.4.1",
-    "pi-fabric": "0.28.1",
+    "pi-fabric": "git+https://github.com/haziqazizi/pi-fabric.git#0fade64",
     "pi-image-preview": "0.1.5",
     "pi-mcp-adapter": "2.14.0",
     "pi-multi-pass": "1.3.0",

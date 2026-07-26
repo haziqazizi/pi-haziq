@@ -3,8 +3,6 @@ export const STATE_ENTRY_TYPE = "haziq-cohesion-state";
 
 export const EXPECTED_TOOLS = [
   "todo",
-  "workflow",
-  "workflow_control",
   "mcp",
   "LoopCreate",
   "LoopList",
