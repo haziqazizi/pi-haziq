@@ -1,3 +1,6 @@
+import { accessSync, constants, existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { dirname, join, resolve } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import piFabric from "pi-fabric";
 
@@ -43,7 +46,37 @@ async function captureInventory(
   return parseFabricCapturedToolNames(messages.join("\n"));
 }
 
+/**
+ * pi-fabric persists mesh and journal state under `<projectRoot>/.pi/fabric`,
+ * defaulting projectRoot to the launch cwd. When Pi starts in a directory that
+ * cannot host that state (e.g. `/`), extension load crashes with EACCES.
+ * Returns a writable global fallback root, or undefined when the cwd is fine
+ * or the operator already pinned a root via env.
+ */
+export function fabricStateRootFallback(
+  cwd: string,
+  env: NodeJS.ProcessEnv = process.env,
+  home: string = homedir(),
+): string | undefined {
+  if (env.PI_FABRIC_PROJECT_ROOT || env.PI_FABRIC_MESH_ROOT) return undefined;
+  let probe = resolve(cwd, ".pi");
+  while (!existsSync(probe)) {
+    const parent = dirname(probe);
+    if (parent === probe) break;
+    probe = parent;
+  }
+  try {
+    accessSync(probe, constants.W_OK);
+    return undefined;
+  } catch {
+    return join(home, ".pi", "agent");
+  }
+}
+
 export default async function haziqFabric(pi: ExtensionAPI) {
+  const fallbackRoot = fabricStateRootFallback(process.cwd());
+  if (fallbackRoot) process.env.PI_FABRIC_PROJECT_ROOT = fallbackRoot;
+
   let fabricCommand: FabricCommandHandler | undefined;
 
   const wrapped = new Proxy(pi, {
