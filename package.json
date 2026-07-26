@@ -32,7 +32,7 @@
     ]
   },
   "dependencies": {
-    "@haziqazizi/designing-dynamic-workflows": "https://github.com/haziqazizi/designing-dynamic-workflows/archive/e275736ca4c3ea3cc14e0015bfb9c73e11876ad9.tar.gz",
+    "@haziqazizi/designing-dynamic-workflows": "https://github.com/haziqazizi/designing-dynamic-workflows/archive/6b437b885037341013945e520fdf4f6e29dcce9a.tar.gz",
     "@juicesharp/rpiv-todo": "2.1.0",
     "@koltmcbride/pi-loop": "0.2.0",
     "@lll9p/pi-better-compaction": "0.2.1",
