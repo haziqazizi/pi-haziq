@@ -24,7 +24,7 @@ Run:
 /cohesion doctor
 ```
 
-Expected: `healthy` and `Tools: 8/8`.
+Expected: `healthy` and `Tools: 8/8 · Fabric-captured`. Run `/fabric captured` to inspect the exact lazy inventory without exposing those schemas to the parent model.
 
 ## 3. Install the package
 
@@ -45,9 +45,12 @@ npm:pi-image-preview
 npm:pi-mcp-adapter@2.11.0
 npm:@lll9p/pi-better-compaction
 npm:@quintinshaw/pi-dynamic-workflows@3.4.1
+npm:pi-fabric
 ```
 
 Keep the single `git:github.com/haziqazizi/pi-haziq` entry.
+
+If `designing-dynamic-workflows` is also installed under `~/.pi/agent/skills`, `~/.agents/skills`, or project skill directories, disable that standalone resource with `pi config` or remove the old clone/symlink after confirming it contains no unpublished work. The bundled commit must be the only discovered skill with that name. Do not let setup delete machine-local skills automatically.
 
 ## 5. Apply non-secret configuration and the Pi preamble
 

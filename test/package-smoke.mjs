@@ -179,6 +179,14 @@ try {
   assert.ok(names.includes("workflows"));
   assert.ok(names.includes("todos"));
   assert.ok(names.includes("mcp"));
+  assert.ok(names.includes("fabric"));
+  assert.ok(names.includes("skill:designing-dynamic-workflows"));
+  assert.equal(names.includes("skill:workflow-authoring"), false);
+  assert.equal(names.includes("skill:workflow-patterns"), false);
+  assert.deepEqual(
+    names.filter((name) => name.startsWith("skill:fabric-")).sort(),
+    ["skill:fabric-exec"],
+  );
 
   await new Promise((resolveWait) => setTimeout(resolveWait, 500));
   assert.equal(existsSync(trustedMarker), true, "trusted project MCP config did not initialize");
@@ -190,9 +198,37 @@ try {
     (event) => event.type === "extension_ui_request" && event.method === "notify" && event.message?.startsWith("Haziq cohesion:"),
   );
   assert.match(notice.message, /^Haziq cohesion: healthy/m);
-  assert.match(notice.message, /^Tools: 8\/8$/m);
+  assert.match(notice.message, /^Tools: 8\/8 · Fabric-captured$/m);
   assert.match(notice.message, /^Herdr: not active$/m);
   assert.match(notice.message, /APPEND_SYSTEM\.md$/m);
+
+  send({ id: "fabric-captured", type: "prompt", message: "/fabric captured" });
+  const fabricCapturedResponse = await waitFor(
+    (event) => event.type === "response" && event.id === "fabric-captured",
+  );
+  assert.equal(fabricCapturedResponse.success, true);
+  const capturedNotice = await waitFor(
+    (event) =>
+      event.type === "extension_ui_request" &&
+      event.method === "notify" &&
+      typeof event.message === "string" &&
+      event.message.includes("workflow_control"),
+  );
+  const capturedNames = new Set(
+    capturedNotice.message.split("\n").map((line) => line.split(" ", 1)[0]),
+  );
+  for (const name of [
+    "todo",
+    "workflow",
+    "workflow_control",
+    "mcp",
+    "LoopCreate",
+    "LoopList",
+    "LoopDelete",
+    "schedule_loop_wakeup",
+  ]) {
+    assert.equal(capturedNames.has(name), true, `${name} was not captured by Fabric`);
+  }
 
   send({ id: "contract", type: "prompt", message: "/cohesion contract" });
   const contractResponse = await waitFor((event) => event.type === "response" && event.id === "contract");
@@ -225,6 +261,13 @@ try {
   assert.equal(afterReload.success, true);
   const afterNames = afterReload.data.commands.map((command) => command.name);
   assert.equal(afterNames.filter((name) => name === "cohesion").length, 1, "reload must not duplicate cohesion");
+  assert.ok(afterNames.includes("skill:designing-dynamic-workflows"));
+  assert.deepEqual(
+    afterNames.filter((name) => name.startsWith("skill:fabric-")).sort(),
+    ["skill:fabric-exec"],
+  );
+  assert.equal(afterNames.includes("skill:workflow-authoring"), false);
+  assert.equal(afterNames.includes("skill:workflow-patterns"), false);
 
   send({ id: "contract-shadow", type: "prompt", message: "/cohesion contract" });
   const shadowResponse = await waitFor((event) => event.type === "response" && event.id === "contract-shadow");
@@ -257,7 +300,7 @@ try {
     `unexpected stderr: ${stderr}`,
   );
 
-  console.log("package smoke: healthy, 8/8 tools, appended contract reached provider exactly once beside project policy, setup check read-only, trusted MCP initialized, reload-safe, no duplicates or extension errors");
+  console.log("package smoke: healthy, one visible workflow skill, 8/8 tools captured by Fabric, appended contract reached provider exactly once beside project policy, setup check read-only, trusted MCP initialized, reload-safe, no duplicates or extension errors");
 } finally {
   child.kill("SIGTERM");
   await new Promise((resolveExit) => {

@@ -35,6 +35,7 @@ import {
   isMeridianRefreshStatus,
   type MeridianRefreshStatus,
 } from "../src/meridian-refresh.ts";
+import { FABRIC_CAPTURED_TOOLS_EVENT } from "./haziq-fabric.ts";
 import { applySetup, defaultSetupPaths, formatSetupPlan, planSetup } from "../src/setup.ts";
 
 const EVENT_LOG_LIMIT = 100;
@@ -114,6 +115,8 @@ function describeCapabilities(snapshot: CohesionSnapshot): string[] {
 export default function haziqCohesion(pi: ExtensionAPI) {
   let snapshot = createSnapshot();
   let toolHealth: ToolHealth = inspectTools([]);
+  let toolsCapturedByFabric = false;
+  let fabricCapturedToolNames = new Set<string>();
   let mcpToolNames = new Set(["mcp"]);
   let eventLog: NormalizedEvent[] = [];
   let activeContext: ExtensionContext | undefined;
@@ -121,6 +124,7 @@ export default function haziqCohesion(pi: ExtensionAPI) {
   let serviceTierConfig: ServiceTierConfigLike = {};
   let meridianRefreshStatus: MeridianRefreshStatus | undefined;
   let unsubscribeMeridianRefresh: (() => void) | undefined;
+  let unsubscribeFabricCapturedTools: (() => void) | undefined;
   let herdrMetadataInFlight = false;
   let herdrMetadataQueued = false;
   let herdrOperational: boolean | undefined;
@@ -147,6 +151,13 @@ export default function haziqCohesion(pi: ExtensionAPI) {
     meridianRefreshStatus = value;
     eventLog.push(makeEvent(snapshot, "meridian", value));
     if (eventLog.length > EVENT_LOG_LIMIT) eventLog = eventLog.slice(-EVENT_LOG_LIMIT);
+  });
+
+  unsubscribeFabricCapturedTools = pi.events.on(FABRIC_CAPTURED_TOOLS_EVENT, (value) => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return;
+    const names = (value as { names?: unknown }).names;
+    if (!Array.isArray(names) || !names.every((name) => typeof name === "string")) return;
+    fabricCapturedToolNames = new Set(names);
   });
 
   function persist() {
@@ -184,9 +195,12 @@ export default function haziqCohesion(pi: ExtensionAPI) {
 
   function refreshToolHealth() {
     const tools = pi.getAllTools();
-    toolHealth = inspectTools(tools.map((tool) => tool.name));
-    mcpToolNames = new Set(
-      tools
+    const directlyVisibleNames = tools.map((tool) => tool.name);
+    toolsCapturedByFabric = directlyVisibleNames.includes("fabric_exec") && fabricCapturedToolNames.size > 0;
+    toolHealth = inspectTools(toolsCapturedByFabric ? fabricCapturedToolNames : directlyVisibleNames);
+    mcpToolNames = new Set([
+      "mcp",
+      ...tools
         .filter(
           (tool) =>
             tool.name === "mcp" ||
@@ -194,7 +208,7 @@ export default function haziqCohesion(pi: ExtensionAPI) {
             tool.sourceInfo.path.includes("haziq-mcp"),
         )
         .map((tool) => tool.name),
-    );
+    ]);
   }
 
   function statusText(): string {
@@ -312,7 +326,7 @@ export default function haziqCohesion(pi: ExtensionAPI) {
     const lines = [
       `Haziq cohesion: ${toolHealth.status}`,
       "",
-      `Tools: ${toolHealth.present.length}/${toolHealth.expected.length}`,
+      `Tools: ${toolHealth.present.length}/${toolHealth.expected.length}${toolsCapturedByFabric ? " · Fabric-captured" : ""}`,
       ...(toolHealth.missing.length > 0 ? [`Missing: ${toolHealth.missing.join(", ")}`] : []),
       "",
       ...describeCapabilities(snapshot),
@@ -719,6 +733,8 @@ export default function haziqCohesion(pi: ExtensionAPI) {
     herdrMetadataQueued = false;
     unsubscribeMeridianRefresh?.();
     unsubscribeMeridianRefresh = undefined;
+    unsubscribeFabricCapturedTools?.();
+    unsubscribeFabricCapturedTools = undefined;
     if (event.reason === "quit" && herdrEnabled && process.env.HERDR_PANE_ID) {
       try {
         await executeHerdr([
