@@ -37,7 +37,7 @@
     "@koltmcbride/pi-loop": "0.2.0",
     "@lll9p/pi-better-compaction": "0.2.1",
     "@quintinshaw/pi-dynamic-workflows": "3.4.1",
-    "pi-fabric": "git+https://github.com/haziqazizi/pi-fabric.git#0fade64",
+    "pi-fabric": "git+https://github.com/haziqazizi/pi-fabric.git#ee34212",
     "pi-image-preview": "0.1.5",
     "pi-mcp-adapter": "2.14.0",
     "pi-multi-pass": "1.3.0",
@@ -88,5 +88,17 @@
   },
   "overrides": {
     "@hono/node-server": "1.19.15"
-  }
+  },
+  "bundleDependencies": [
+    "@juicesharp/rpiv-todo",
+    "@koltmcbride/pi-loop",
+    "@lll9p/pi-better-compaction",
+    "@quintinshaw/pi-dynamic-workflows",
+    "pi-image-preview",
+    "pi-mcp-adapter",
+    "pi-multi-pass",
+    "pi-openai-service-tier",
+    "@haziqazizi/designing-dynamic-workflows",
+    "pi-fabric"
+  ]
 }

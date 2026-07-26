@@ -24,7 +24,7 @@ test("package advertises the doctrine skill plus the full Fabric skill set; work
   assert.equal(pkg.pi.extensions.includes("./node_modules/@quintinshaw/pi-dynamic-workflows/extensions/workflow.ts"), false);
   assert.ok(pkg.pi.extensions.includes("./extensions/haziq-fabric.ts"));
   assert.equal(pkg.pi.extensions.includes("./node_modules/pi-fabric/dist/index.js"), false);
-  assert.equal(pkg.dependencies["pi-fabric"], "git+https://github.com/haziqazizi/pi-fabric.git#0fade64");
+  assert.equal(pkg.dependencies["pi-fabric"], "git+https://github.com/haziqazizi/pi-fabric.git#ee34212");
   assert.equal(pkg.engines.node, ">=24");
   assert.ok(pkg.bundledDependencies.includes("@haziqazizi/designing-dynamic-workflows"));
   assert.ok(pkg.bundledDependencies.includes("pi-fabric"));
