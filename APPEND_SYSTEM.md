@@ -37,9 +37,9 @@ Then start Pi, run `/cohesion setup`, approve its preview, and run `/reload`. Pr
 
 Herdr is optional. When `HERDR_ENV=1`, verify that the Herdr-managed Pi integration is current through Herdr's supported integration command. Never vendor or edit `~/.pi/agent/extensions/herdr-agent-state.ts` from this package.
 
-## Dynamic workflow authoring
+## Fabric orchestration authoring
 
-Before authoring or changing a custom script for the registered `workflow` tool, load the `designing-dynamic-workflows` skill and follow its Pi runtime adapter. That single visible skill loads the pinned runtime-owned authoring or built-in-pattern contract when needed; do not reconstruct hidden implementation guidance from memory. Existing saved workflows and direct tasks do not require redesign.
+Before authoring or changing a `fabric_exec` orchestration program, load the `designing-dynamic-workflows` skill for design doctrine and the `fabric-exec` skill for the runtime authoring contract. Those hold the intended patterns and runtime rules; do not reconstruct hidden implementation guidance from memory. For an advanced multi-agent pattern, invoke `/skill:fabric-guide` to pick the smallest sufficient one. Existing direct tasks do not require redesign.
 
 When a non-trivial build outcome is clear, first run a bounded planning workflow to identify the most efficient safe path, explicitly considering dynamic workflows, recursive decomposition only for context overflow, parallel subagents, critical-path dependencies, coordination cost, and proof gates. Sequence implementation risk-first through contracts and a thin end-to-end slice, parallelize only isolated work, integrate and verify continuously, and prefer the plan that minimizes expected wall-clock time, compute, coordination, and rework—even when that plan is one agent working directly.
 

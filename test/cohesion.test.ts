@@ -79,8 +79,8 @@ test("derives native compaction and service tier for a supported Responses model
 test("reports missing expected tools without throwing", () => {
   const health = inspectTools(["todo", "workflow", "mcp"]);
   assert.equal(health.status, "degraded");
-  assert.deepEqual(health.present, ["todo", "workflow", "mcp"]);
-  assert.ok(health.missing.includes("workflow_control"));
+  assert.deepEqual(health.present, ["todo", "mcp"]);
+  assert.ok(health.missing.includes("schedule_loop_wakeup"));
 
   const complete = inspectTools(EXPECTED_TOOLS);
   assert.equal(complete.status, "healthy");
