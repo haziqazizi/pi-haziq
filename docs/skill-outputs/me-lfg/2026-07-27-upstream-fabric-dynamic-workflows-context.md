@@ -8,7 +8,7 @@ provenance:
   kind: direct_current_user
   source: current conversation turn requesting "Use the todo tool... LFG. Land all."
 session_kind: autonomous
-execution_status: running
+execution_status: complete
 authorized_actions:
   - action: repo_edit
     targets: [haziqazizi/pi-haziq, haziqazizi/designing-dynamic-workflows]
