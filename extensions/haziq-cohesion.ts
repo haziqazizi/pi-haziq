@@ -12,6 +12,7 @@ import {
   execResultSucceeded,
   extractWorkflowDelivery,
   extractWorkflowRunId,
+  inspectRuntimeConfiguration,
   inspectTools,
   makeEvent,
   normalizeWorkflowStatus,
@@ -24,6 +25,7 @@ import {
   type CohesionSnapshot,
   type CompactionConfigLike,
   type NormalizedEvent,
+  type RuntimeConfigurationHealth,
   type ServiceTierConfigLike,
   type ToolHealth,
   type WorkflowLink,
@@ -55,6 +57,8 @@ const BETTER_COMPACTION_CONFIG = join(
 );
 const SERVICE_TIER_CONFIG = join(homedir(), ".pi", "agent", "extensions", "pi-openai-service-tier.json");
 const WORKFLOW_TIERS_CONFIG = join(homedir(), ".pi", "workflows", "model-tiers.json");
+const FABRIC_CONFIG = join(SETUP_PATHS.agentDir, "fabric.json");
+const WORKFLOW_SETTINGS_CONFIG = join(SETUP_PATHS.workflowDir, "settings.json");
 
 function readJson<T>(path: string): T | undefined {
   try {
@@ -115,6 +119,7 @@ function describeCapabilities(snapshot: CohesionSnapshot): string[] {
 export default function haziqCohesion(pi: ExtensionAPI) {
   let snapshot = createSnapshot();
   let toolHealth: ToolHealth = inspectTools([]);
+  let runtimeConfigHealth: RuntimeConfigurationHealth = inspectRuntimeConfiguration(undefined, undefined);
   let toolsCapturedByFabric = false;
   let fabricCapturedToolNames = new Set<string>();
   let mcpToolNames = new Set(["mcp"]);
@@ -193,6 +198,10 @@ export default function haziqCohesion(pi: ExtensionAPI) {
     refreshCapabilities(ctx);
   }
 
+  function refreshRuntimeConfigHealth() {
+    runtimeConfigHealth = inspectRuntimeConfiguration(readJson(FABRIC_CONFIG), readJson(WORKFLOW_SETTINGS_CONFIG));
+  }
+
   function refreshToolHealth() {
     const tools = pi.getAllTools();
     const directlyVisibleNames = tools.map((tool) => tool.name);
@@ -213,7 +222,9 @@ export default function haziqCohesion(pi: ExtensionAPI) {
 
   function statusText(): string {
     const activeRuns = runningWorkflowIds(snapshot).length;
-    if (toolHealth.status === "degraded") return `cohesion !${toolHealth.missing.length}`;
+    if (toolHealth.status === "degraded" || runtimeConfigHealth.status === "degraded") {
+      return `cohesion !${toolHealth.missing.length + runtimeConfigHealth.problems.length}`;
+    }
     if (activeRuns > 0) return `cohesion · wf ${activeRuns}`;
     return "cohesion ✓";
   }
@@ -328,6 +339,9 @@ export default function haziqCohesion(pi: ExtensionAPI) {
       "",
       `Tools: ${toolHealth.present.length}/${toolHealth.expected.length}${toolsCapturedByFabric ? " · Fabric-captured" : ""}`,
       ...(toolHealth.missing.length > 0 ? [`Missing: ${toolHealth.missing.join(", ")}`] : []),
+      `Runtime config: ${runtimeConfigHealth.status}`,
+      ...runtimeConfigHealth.problems.map((problem) => `Config drift: ${problem}`),
+      ...(runtimeConfigHealth.problems.length > 0 ? ["Repair: run /cohesion setup, then /reload"] : []),
       "",
       ...describeCapabilities(snapshot),
       `Meridian refresh: ${formatMeridianRefreshStatus(meridianRefreshStatus)}`,
@@ -341,6 +355,8 @@ export default function haziqCohesion(pi: ExtensionAPI) {
       configStatus(BETTER_COMPACTION_CONFIG, Boolean(readJson(BETTER_COMPACTION_CONFIG))),
       configStatus(SERVICE_TIER_CONFIG, Boolean(readJson(SERVICE_TIER_CONFIG))),
       configStatus(WORKFLOW_TIERS_CONFIG, Boolean(readJson(WORKFLOW_TIERS_CONFIG))),
+      configStatus(FABRIC_CONFIG, Boolean(readJson(FABRIC_CONFIG))),
+      configStatus(WORKFLOW_SETTINGS_CONFIG, Boolean(readJson(WORKFLOW_SETTINGS_CONFIG))),
     ];
     return lines.join("\n");
   }
@@ -420,10 +436,12 @@ export default function haziqCohesion(pi: ExtensionAPI) {
       }
       if (action === "doctor" || action === "status") {
         refreshToolHealth();
+        refreshRuntimeConfigHealth();
         refreshCapabilities(ctx);
         updateStatus(ctx);
         queueHerdrMetadata();
-        ctx.ui.notify(doctorReport(), toolHealth.status === "healthy" ? "info" : "warning");
+        const healthy = toolHealth.status === "healthy" && runtimeConfigHealth.status === "healthy";
+        ctx.ui.notify(doctorReport(), healthy ? "info" : "warning");
         return;
       }
       ctx.ui.notify("Usage: /cohesion [status|doctor|events|contract|reload|setup [check]]", "warning");
@@ -435,13 +453,15 @@ export default function haziqCohesion(pi: ExtensionAPI) {
     activeContext = ctx;
     restoreBranchState(ctx);
     refreshToolHealth();
+    refreshRuntimeConfigHealth();
     persist();
     updateStatus(ctx);
     queueHerdrMetadata();
     emit("haziq:session-started", "pi", {
       reason: event.reason,
-      health: toolHealth.status,
+      health: toolHealth.status === "healthy" && runtimeConfigHealth.status === "healthy" ? "healthy" : "degraded",
       missingTools: toolHealth.missing,
+      runtimeConfigProblems: runtimeConfigHealth.problems,
     });
     if (toolHealth.status === "degraded" && ctx.hasUI) {
       ctx.ui.notify(`Haziq cohesion degraded; missing tools: ${toolHealth.missing.join(", ")}`, "warning");

@@ -8,6 +8,8 @@ export const EXPECTED_TOOLS = [
   "LoopList",
   "LoopDelete",
   "schedule_loop_wakeup",
+  "workflow",
+  "workflow_control",
 ] as const;
 
 export type CohesionHealth = "healthy" | "degraded";
@@ -52,6 +54,41 @@ export interface ToolHealth {
   expected: string[];
   present: string[];
   missing: string[];
+}
+
+export interface RuntimeConfigurationHealth {
+  status: CohesionHealth;
+  problems: string[];
+}
+
+function nestedValue(value: unknown, path: string[]): unknown {
+  let current = value;
+  for (const key of path) {
+    if (!current || typeof current !== "object" || Array.isArray(current)) return undefined;
+    current = (current as Record<string, unknown>)[key];
+  }
+  return current;
+}
+
+export function inspectRuntimeConfiguration(
+  fabric: unknown,
+  workflow: unknown,
+): RuntimeConfigurationHealth {
+  const problems: string[] = [];
+  const expect = (source: unknown, path: string[], expected: unknown, label: string) => {
+    if (JSON.stringify(nestedValue(source, path)) !== JSON.stringify(expected)) problems.push(label);
+  };
+  expect(fabric, ["configVersion"], 1, "Fabric configVersion must be 1");
+  expect(fabric, ["fullCodeMode"], true, "Fabric fullCodeMode must be enabled");
+  expect(fabric, ["agents", "enabled"], false, "Fabric agents must be disabled");
+  expect(fabric, ["mesh", "enabled"], false, "Fabric mesh must be disabled");
+  expect(fabric, ["capture", "enabled"], true, "Fabric capture must be enabled");
+  expect(fabric, ["capture", "hideFromModel"], true, "Fabric captured tools must be hidden");
+  expect(fabric, ["capture", "keepVisible"], ["fabric_exec"], "Only fabric_exec may stay visible");
+  expect(fabric, ["capture", "risks", "workflow"], "agent", "Workflow launch risk must be agent");
+  expect(fabric, ["capture", "risks", "workflow_control"], "execute", "Workflow control risk must be execute");
+  expect(workflow, ["keywordTriggerEnabled"], false, "Dynamic keyword trigger must be disabled");
+  return { status: problems.length === 0 ? "healthy" : "degraded", problems };
 }
 
 export interface WorkflowLink {
