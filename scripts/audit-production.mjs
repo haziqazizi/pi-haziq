@@ -26,18 +26,9 @@ if (names.length === 0) {
   process.exit(0);
 }
 
-const expectedNames = [
-  "@hono/node-server",
-  "@modelcontextprotocol/sdk",
-  "mcporter",
-  "pi-fabric",
-  "pi-mcp-adapter",
-];
+const expectedNames = ["@hono/node-server", "@modelcontextprotocol/sdk"];
 const honoVia = vulnerabilities["@hono/node-server"]?.via;
 const sdkVia = vulnerabilities["@modelcontextprotocol/sdk"]?.via;
-const mcporterVia = vulnerabilities.mcporter?.via;
-const fabricVia = vulnerabilities["pi-fabric"]?.via;
-const adapterVia = vulnerabilities["pi-mcp-adapter"]?.via;
 const exactExpectedChain =
   honoPackage.version === "1.19.15" &&
   names.length === expectedNames.length &&
@@ -48,16 +39,7 @@ const exactExpectedChain =
   honoVia[0].url === "https://github.com/advisories/GHSA-frvp-7c67-39w9" &&
   Array.isArray(sdkVia) &&
   sdkVia.length === 1 &&
-  sdkVia[0] === "@hono/node-server" &&
-  Array.isArray(mcporterVia) &&
-  mcporterVia.length === 1 &&
-  mcporterVia[0] === "@modelcontextprotocol/sdk" &&
-  Array.isArray(fabricVia) &&
-  fabricVia.length === 1 &&
-  fabricVia[0] === "mcporter" &&
-  Array.isArray(adapterVia) &&
-  adapterVia.length === 1 &&
-  adapterVia[0] === "@modelcontextprotocol/sdk";
+  sdkVia[0] === "@hono/node-server";
 
 if (!exactExpectedChain) {
   process.stderr.write(`${JSON.stringify(report, null, 2)}\n`);
@@ -65,5 +47,5 @@ if (!exactExpectedChain) {
 }
 
 console.log(
-  "production audit: only GHSA-frvp-7c67-39w9 stale metadata remains through pi-mcp-adapter and Fabric/mcporter; installed @hono/node-server@1.19.15 is the patched 1.x release",
+  "production audit: only GHSA-frvp-7c67-39w9 stale metadata remains through the MCP SDK; installed @hono/node-server@1.19.15 is the patched 1.x release",
 );

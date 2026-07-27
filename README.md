@@ -27,9 +27,9 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 | `pi-image-preview` | 0.1.5 | Inline image rendering |
 | `pi-mcp-adapter` | 2.14.0 | MCP gateway and server tools |
 | `@lll9p/pi-better-compaction` | 0.2.1 | Native Responses compact plus delegated fallback |
-| `@quintinshaw/pi-dynamic-workflows` | 3.4.1 | Journaled multi-agent workflows |
-| `@haziqazizi/designing-dynamic-workflows` | `c00a3dca` | Single visible workflow-design skill with pinned runtime adapters |
-| `pi-fabric` | 0.28.1 | Type-checked tool runtime; only `fabric-exec` is advertised as a skill |
+| `@quintinshaw/pi-dynamic-workflows` | 3.4.1 | Sole background subagent runtime; tools captured by Fabric, runtime skills hidden |
+| `@haziqazizi/designing-dynamic-workflows` | `c0320dff` | Single visible workflow-design skill with pinned runtime adapters |
+| `pi-fabric` | 0.28.4 | Upstream deterministic host-tool runtime; agents and mesh disabled; only `fabric-exec` advertised |
 
 Fabric's separate worker process intentionally carries its reviewed `@earendil-works/pi-ai@0.80.6` runtime dependency; upstream's package-manifest test rejects moving it to a host peer because the standalone worker imports it directly. Production smoke pins that sole core-runtime exception and rejects any expansion.
 
@@ -108,7 +108,7 @@ Inside Pi:
 /cohesion setup
 ```
 
-The doctor reports expected tools, the active model/API, compaction strategy, service-tier state, active todo/workflow correlation, Herdr availability, machine configuration presence, and the last Meridian refresh result with published/capability model counts and timestamp.
+The doctor reports expected captured tools, sole-subagent runtime configuration drift, the active model/API, compaction strategy, service-tier state, active todo/workflow correlation, Herdr availability, machine configuration presence, and the last Meridian refresh result with published/capability model counts and timestamp. Configuration drift is repaired explicitly with `/cohesion setup`, followed by `/reload`.
 
 Pi refreshes dynamic model providers during online startup, model-picker refresh, and `pi update`. Meridian discovery reads the global `~/.pi/agent/models.json` provider configuration only; project files cannot change its endpoint or credentials. Current Meridian `/v1/models` responses list model IDs, so local `contextWindow` and `maxTokens` values remain authoritative until Meridian publishes validated capability fields.
 
@@ -120,6 +120,8 @@ Templates live in [`config/`](config/):
 - `pi-better-compaction.json`
 - `pi-openai-service-tier.json`
 - `workflow-model-tiers.json`
+- `fabric.json`
+- `workflow-settings.json`
 
 They intentionally contain no credentials. Applying them through `/cohesion setup` is an explicit, confirmed migration step, never a package-load side effect.
 

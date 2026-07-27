@@ -32,6 +32,11 @@ async function fixture(): Promise<{ root: string; paths: SetupPaths }> {
   await writeJson(join(packageRoot, "config", "workflow-model-tiers.json"), {
     tiers: { small: "small-model", big: "big-model" },
   });
+  await writeJson(join(packageRoot, "config", "fabric.json"), {
+    configVersion: 1, fullCodeMode: true, agents: { enabled: false }, mesh: { enabled: false },
+    capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"], risks: { workflow: "agent", workflow_control: "execute" } },
+  });
+  await writeJson(join(packageRoot, "config", "workflow-settings.json"), { keywordTriggerEnabled: false });
   return {
     root,
     paths: {
@@ -76,13 +81,13 @@ test("setup previews, backs up, applies, and becomes idempotent without changing
     });
 
     const operations = await planSetup(paths);
-    assert.equal(operations.length, 5);
+    assert.equal(operations.length, 7);
     assert.equal(operations.filter((operation) => operation.status === "update").length, 4);
-    assert.equal(operations.filter((operation) => operation.status === "create").length, 1);
-    assert.match(formatSetupPlan(operations), /pi-haziq setup: 5 changes/);
+    assert.equal(operations.filter((operation) => operation.status === "create").length, 3);
+    assert.match(formatSetupPlan(operations), /pi-haziq setup: 7 changes/);
 
     const applied = await applySetup(operations, new Date("2026-07-25T20:15:00.000Z"));
-    assert.equal(applied.length, 5);
+    assert.equal(applied.length, 7);
     assert.equal(applied.filter((operation) => operation.backup).length, 4);
     assert.equal((await lstat(join(paths.agentDir, "APPEND_SYSTEM.md"))).isSymbolicLink(), true);
     assert.equal(await readlink(join(paths.agentDir, "APPEND_SYSTEM.md")), join(paths.packageRoot, "APPEND_SYSTEM.md"));
@@ -109,9 +114,27 @@ test("setup previews, backs up, applies, and becomes idempotent without changing
     assert.equal(compaction.enabled, true);
     assert.equal(compaction.compactionModel, "tokenmaxxing/gpt-5.6-sol");
 
+    const fabric = JSON.parse(await readFile(join(paths.agentDir, "fabric.json"), "utf8"));
+    assert.equal(fabric.agents.enabled, false);
+    assert.equal(fabric.mesh.enabled, false);
+    assert.deepEqual(fabric.capture.keepVisible, ["fabric_exec"]);
+    const workflowSettings = JSON.parse(await readFile(join(paths.workflowDir, "settings.json"), "utf8"));
+    assert.equal(workflowSettings.keywordTriggerEnabled, false);
+
     const secondPlan = await planSetup(paths);
     assert.ok(secondPlan.every((operation) => operation.status === "unchanged"));
     assert.equal((await applySetup(secondPlan)).length, 0);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("setup fails before mutation when a packaged runtime policy is missing", async () => {
+  const { root, paths } = await fixture();
+  try {
+    await rm(join(paths.packageRoot, "config", "fabric.json"));
+    await assert.rejects(planSetup(paths), /Missing package setup source/);
+    assert.equal(await readFile(join(paths.packageRoot, "APPEND_SYSTEM.md"), "utf8"), "# managed policy\n");
   } finally {
     await rm(root, { recursive: true, force: true });
   }

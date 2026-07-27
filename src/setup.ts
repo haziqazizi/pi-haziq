@@ -171,6 +171,7 @@ async function planJson(
   merge: (existing: JsonObject, desired: JsonObject) => JsonObject = mergeObjects,
 ): Promise<SetupOperation> {
   await assertSafePath(root, target);
+  if (await pathKind(source) === "missing") throw new Error(`Missing package setup source: ${source}`);
   const desiredTemplate = await readJsonObject(source);
   const targetKind = await pathKind(target);
   if (targetKind === "symlink") {
@@ -256,6 +257,20 @@ export async function planSetup(paths: SetupPaths): Promise<SetupOperation[]> {
       join(configDir, "pi-openai-service-tier.json"),
       join(paths.ownerAgentDir, "extensions", "pi-openai-service-tier.json"),
       paths.ownerAgentDir,
+      paths.lockPath,
+    ),
+    planJson(
+      "Fabric tool-only runtime",
+      join(configDir, "fabric.json"),
+      join(paths.agentDir, "fabric.json"),
+      paths.agentDir,
+      paths.lockPath,
+    ),
+    planJson(
+      "Dynamic Workflow settings",
+      join(configDir, "workflow-settings.json"),
+      join(paths.workflowDir, "settings.json"),
+      paths.workflowDir,
       paths.lockPath,
     ),
     planJson(

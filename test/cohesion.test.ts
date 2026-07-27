@@ -10,6 +10,7 @@ import {
   execResultSucceeded,
   extractWorkflowDelivery,
   extractWorkflowRunId,
+  inspectRuntimeConfiguration,
   inspectTools,
   normalizeWorkflowStatus,
   restoreLatestSnapshot,
@@ -79,12 +80,32 @@ test("derives native compaction and service tier for a supported Responses model
 test("reports missing expected tools without throwing", () => {
   const health = inspectTools(["todo", "workflow", "mcp"]);
   assert.equal(health.status, "degraded");
-  assert.deepEqual(health.present, ["todo", "mcp"]);
+  assert.deepEqual(health.present, ["todo", "mcp", "workflow"]);
   assert.ok(health.missing.includes("schedule_loop_wakeup"));
 
   const complete = inspectTools(EXPECTED_TOOLS);
   assert.equal(complete.status, "healthy");
   assert.deepEqual(complete.missing, []);
+});
+
+test("requires the approved sole-subagent runtime configuration", () => {
+  const healthy = inspectRuntimeConfiguration(
+    {
+      configVersion: 1, fullCodeMode: true,
+      agents: { enabled: false }, mesh: { enabled: false },
+      capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"], risks: { workflow: "agent", workflow_control: "execute" } },
+    },
+    { keywordTriggerEnabled: false },
+  );
+  assert.deepEqual(healthy, { status: "healthy", problems: [] });
+  const drift = inspectRuntimeConfiguration(
+    { configVersion: 1, fullCodeMode: true, agents: { enabled: true }, mesh: { enabled: true }, capture: { enabled: true, hideFromModel: false, keepVisible: ["fabric_exec", "workflow"], risks: {} } },
+    { keywordTriggerEnabled: true },
+  );
+  assert.equal(drift.status, "degraded");
+  assert.ok(drift.problems.some((problem) => /agents/.test(problem)));
+  assert.ok(drift.problems.some((problem) => /keyword/.test(problem)));
+  assert.ok(drift.problems.some((problem) => /Only fabric_exec/.test(problem)));
 });
 
 test("extracts workflow run IDs from typed details and fallback text", () => {

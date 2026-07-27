@@ -65,7 +65,8 @@ The first command is read-only. The second shows a key-only, value-redacted prev
 
 - links the package-owned `APPEND_SYSTEM.md` into Pi's global agent directory (`getAgentDir()`);
 - merges `config/settings.fragment.json` without changing the chosen default provider/model or package list;
-- merges the better-compaction, service-tier, and workflow-tier templates where those pinned owners actually read them.
+- merges the better-compaction, service-tier, and workflow-tier templates where those pinned owners actually read them;
+- disables Fabric agents/mesh, keeps only `fabric_exec` visible, captures Dynamic tools with explicit risks, and disables Dynamic's competing keyword trigger.
 
 It never touches `auth.json`, `models.json`, provider credentials, MCP authentication, sessions, trust decisions, or caches. If an owned JSON target is malformed, an unexpected configuration symlink is present, or any target changes after preview, setup fails before changing files. Pi agent-directory overrides are honored for Pi-owned files; pinned extensions that hardcode `~/.pi` continue to receive config there.
 
@@ -82,6 +83,10 @@ config/pi-openai-service-tier.json
   → ~/.pi/agent/extensions/pi-openai-service-tier.json
 config/workflow-model-tiers.json
   → ~/.pi/workflows/model-tiers.json
+config/fabric.json
+  → <getAgentDir()>/fabric.json
+config/workflow-settings.json
+  → ~/.pi/workflows/settings.json
 ```
 
 ## 6. Reload and prove
@@ -109,4 +114,4 @@ Also verify:
 - Restore all targets from the same setup run before reloading; do not mix timestamps from different runs.
 - Then run `/reload` and `/cohesion doctor`.
 
-The affected target set is the five mappings in step 5: global append policy, settings fragment, better compaction, service tier, and workflow tiers. The package does not modify or own provider authentication.
+The affected target set is the seven mappings in step 5: global append policy, settings fragment, better compaction, service tier, workflow tiers, Fabric runtime policy, and Dynamic Workflow settings. The package does not modify or own provider authentication.

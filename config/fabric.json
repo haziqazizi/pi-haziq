@@ -1,0 +1,21 @@
+{
+  "configVersion": 1,
+  "fullCodeMode": true,
+  "agents": {
+    "enabled": false
+  },
+  "mesh": {
+    "enabled": false
+  },
+  "capture": {
+    "enabled": true,
+    "hideFromModel": true,
+    "keepVisible": [
+      "fabric_exec"
+    ],
+    "risks": {
+      "workflow": "agent",
+      "workflow_control": "execute"
+    }
+  }
+}
