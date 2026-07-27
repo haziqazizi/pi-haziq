@@ -18,3 +18,8 @@ Verdict: **PASS for PR publication**.
 | Independent current-diff review | fatal | PASS | `docs/skill-outputs/me-review/2026-07-27-dynamic-workflows-cutover.md` |
 
 No failed fatal row. Runtime restart behavior is dependency-owned and was replayed through the exact pinned upstream release suite rather than a lookalike implementation.
+
+## Installed observation
+
+- Doctor: healthy, 8/8 Fabric-captured, runtime config healthy.
+- Canary: `installed-canary-ms3nkvfj-gzou1x` completed with exact result `INSTALLED_DYNAMIC_CANARY_OK`.

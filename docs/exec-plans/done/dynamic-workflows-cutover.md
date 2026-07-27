@@ -1,6 +1,6 @@
 # Upstream Fabric + Dynamic Workflows cutover
 
-Status: active — establishing baselines and contracts.
+Status: done — merged, installed, configured, reloaded, doctor healthy, and canary observed.
 Context: [2026-07-27-upstream-fabric-dynamic-workflows-context.md](../../skill-outputs/me-lfg/2026-07-27-upstream-fabric-dynamic-workflows-context.md)
 
 ## Acceptance criteria
@@ -14,13 +14,14 @@ Context: [2026-07-27-upstream-fabric-dynamic-workflows-context.md](../../skill-o
 | AC5 | designing-dynamic-workflows routes all subagents to Dynamic and direct work to Fabric. | passing | skill checks + routing fixtures |
 | AC6 | Background launch, follow-up, control, pause/resume, reload/restart, and cleanup work in real Pi. | passing | isolated real Pi smoke |
 | AC7 | Setup remains previewed, atomic, stale-safe, backed up, idempotent, and secret-free. | passing | fault-injection setup suite |
-| AC8 | Complete proof gates, production audit, independent review, PR checks, merges, installed update, reload, doctor, and canary are green. | active | command/PR/canary evidence |
+| AC8 | Complete proof gates, production audit, independent review, PR checks, merges, installed update, reload, doctor, and canary are green. | passing | command/PR/canary evidence |
 
 ## Progress
 
 - Done: doctrine PR #2 merged; upstream pins integrated; runtime policy/setup/doctor implemented; deterministic, production, real canary, upstream release, and independent review gates pass.
-- In progress: publish and land the pi-haziq PR.
-- Next: update installed package, reload, apply setup, run doctor, and observe a bounded canary.
+- Done: pi-haziq PR #16 merged; installed package updated and reloaded; setup applied; doctor healthy; installed background canary completed with exact expected output.
+- In progress: none.
+- Next: none.
 
 ## Decision log
 
@@ -40,9 +41,9 @@ Context: [2026-07-27-upstream-fabric-dynamic-workflows-context.md](../../skill-o
 ## Interruption state
 
 - Deadline signal: unavailable; checkpoint after each verified logical unit.
-- Active resources: two Git worktrees; owner main; remove only after merged and installed cutover.
-- Resume gate: re-read this plan and context, validate branches and todo state, rerun the latest named proof.
-- First resume action: inspect current diffs and task #1 status.
+- Active resources: none.
+- Cleanup: implementation worktrees removed; canary terminal; no running workflows.
+- Resume gate: none; plan complete.
 
 ## Blockers
 
