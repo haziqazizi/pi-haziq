@@ -37,7 +37,7 @@
     "@juicesharp/rpiv-todo": "2.1.0",
     "@koltmcbride/pi-loop": "0.2.0",
     "@lll9p/pi-better-compaction": "0.2.1",
-    "@quintinshaw/pi-dynamic-workflows": "3.4.1",
+    "@quintinshaw/pi-dynamic-workflows": "https://github.com/haziqazizi/pi-dynamic-workflows/archive/d76cdb5da3cb0ad87cfabdc1aa39212047148b45.tar.gz",
     "pi-fabric": "0.28.4",
     "pi-image-preview": "0.1.5",
     "pi-mcp-adapter": "2.14.0",
