@@ -29,11 +29,22 @@ test("package exposes one doctrine skill and one Fabric authoring skill", () => 
     "https://github.com/haziqazizi/designing-dynamic-workflows/archive/c0320dffdcd2ded349220f92ab23e12c390c6f50.tar.gz",
   );
   assert.equal(pkg.dependencies["pi-fabric"], "0.28.4");
-  assert.equal(pkg.dependencies["@quintinshaw/pi-dynamic-workflows"], "3.4.1");
+  assert.equal(pkg.dependencies["@quintinshaw/pi-dynamic-workflows"], "https://github.com/haziqazizi/pi-dynamic-workflows/archive/d76cdb5da3cb0ad87cfabdc1aa39212047148b45.tar.gz");
   assert.equal(pkg.engines.node, ">=24");
   assert.ok(pkg.bundledDependencies.includes("@haziqazizi/designing-dynamic-workflows"));
   assert.ok(pkg.bundledDependencies.includes("@quintinshaw/pi-dynamic-workflows"));
   assert.ok(pkg.bundledDependencies.includes("pi-fabric"));
+});
+
+test("packages parent model inheritance with asynchronous execution as the default", () => {
+  const runtimeRoot = join(root, "node_modules/@quintinshaw/pi-dynamic-workflows");
+  const extension = readFileSync(join(runtimeRoot, "extensions/workflow.ts"), "utf8");
+  const agent = readFileSync(join(runtimeRoot, "src/agent.ts"), "utf8");
+  const tool = readFileSync(join(runtimeRoot, "src/workflow-tool.ts"), "utf8");
+
+  assert.ok(extension.includes("pi.getThinkingLevel()"));
+  assert.ok(agent.includes("if (mainModel) return mainModel"));
+  assert.ok(tool.includes("params.background ?? true"));
 });
 
 test("uses reviewed upstream Fabric with its isolated worker dependency", () => {
