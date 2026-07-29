@@ -25,7 +25,9 @@
       "./node_modules/@lll9p/pi-better-compaction/index.ts",
       "./node_modules/@quintinshaw/pi-dynamic-workflows/extensions/workflow.ts",
       "./extensions/haziq-fabric.ts",
-      "./extensions/haziq-cohesion.ts"
+      "./extensions/haziq-cohesion.ts",
+      "./node_modules/pi-web-access/index.ts",
+      "./node_modules/pi-agent-browser-native/dist/extensions/agent-browser/index.js"
     ],
     "skills": [
       "./node_modules/@haziqazizi/designing-dynamic-workflows",
@@ -38,11 +40,13 @@
     "@koltmcbride/pi-loop": "0.2.0",
     "@lll9p/pi-better-compaction": "0.2.1",
     "@quintinshaw/pi-dynamic-workflows": "https://github.com/haziqazizi/pi-dynamic-workflows/archive/d76cdb5da3cb0ad87cfabdc1aa39212047148b45.tar.gz",
+    "pi-agent-browser-native": "0.2.72",
     "pi-fabric": "0.28.4",
     "pi-image-preview": "0.1.5",
     "pi-mcp-adapter": "2.14.0",
     "pi-multi-pass": "1.3.0",
-    "pi-openai-service-tier": "0.1.4"
+    "pi-openai-service-tier": "0.1.4",
+    "pi-web-access": "0.15.0"
   },
   "bundledDependencies": [
     "@juicesharp/rpiv-todo",
