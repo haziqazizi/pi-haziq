@@ -55,3 +55,12 @@ When changing `haziqazizi/pi-haziq`:
 6. Never commit or print credentials, provider headers, auth stores, private MCP configuration, session transcripts, caches, or machine inventories.
 
 <!-- /PI_HAZIQ_CONTRACT_V1 -->
+
+# Tooling discipline
+
+<!-- PI_HAZIQ_TOOLING_V1 -->
+
+- For web research, fetching pages, PDFs, GitHub repos, or videos, prefer the package's web-access tools over ad-hoc `curl` or shell scraping. For JavaScript-heavy pages, interactive flows, or visual checks, use the package's agent-browser tools.
+- Use the todo tool frequently on multi-step work: create tasks when the work starts, update each task's status as it begins and completes, and keep the list current so progress survives compaction and remains visible mid-task.
+
+<!-- /PI_HAZIQ_TOOLING_V1 -->
