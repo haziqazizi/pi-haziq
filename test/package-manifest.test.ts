@@ -28,7 +28,7 @@ test("package exposes one doctrine skill and one Fabric authoring skill", () => 
     pkg.dependencies["@haziqazizi/designing-dynamic-workflows"],
     "https://github.com/haziqazizi/designing-dynamic-workflows/archive/c0320dffdcd2ded349220f92ab23e12c390c6f50.tar.gz",
   );
-  assert.equal(pkg.dependencies["pi-fabric"], "0.28.4");
+  assert.equal(pkg.dependencies["pi-fabric"], "0.28.6");
   assert.equal(pkg.dependencies["@quintinshaw/pi-dynamic-workflows"], "https://github.com/haziqazizi/pi-dynamic-workflows/archive/d76cdb5da3cb0ad87cfabdc1aa39212047148b45.tar.gz");
   assert.equal(pkg.engines.node, ">=24");
   assert.ok(pkg.bundledDependencies.includes("@haziqazizi/designing-dynamic-workflows"));
@@ -53,13 +53,13 @@ test("uses reviewed upstream Fabric with its isolated worker dependency", () => 
     repository?: { url?: string };
     dependencies: Record<string, string>;
   };
-  assert.equal(fabric.version, "0.28.4");
+  assert.equal(fabric.version, "0.28.6");
   assert.match(fabric.repository?.url ?? "", /monotykamary\/pi-fabric/);
   const coreDependencies = Object.keys(fabric.dependencies)
     .filter((name) => name.startsWith("@earendil-works/"))
     .sort();
   assert.deepEqual(coreDependencies, ["@earendil-works/pi-ai"]);
-  assert.equal(fabric.dependencies["@earendil-works/pi-ai"], "0.80.6");
+  assert.equal(fabric.dependencies["@earendil-works/pi-ai"], "0.82.1");
 });
 
 test("hidden runtime contracts remain installed for the visible adapter", () => {

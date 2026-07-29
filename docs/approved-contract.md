@@ -32,5 +32,5 @@ These were discussed but explicitly not first-release requirements or would viol
 - Fabric advisors, supervisors, actors, swarms, handoff, RLM, councils, trajectory judging, retained-branch integration, and mesh-backed postmortems are intentionally unavailable in the sole-Dynamic-subagent profile.
 - Cohesion does not invent provider-switch, workflow-progress, artifact, or task-loop semantics when an owning extension exposes no stable public event. It observes public Pi hooks and pinned compatibility seams instead.
 - Cohesion does not complete todos automatically. A delivered workflow must be verified at a faithful surface first.
-- Fabric's standalone worker retains its exact `@earendil-works/pi-ai@0.80.6` runtime dependency; production proof rejects any additional bundled Pi core dependency or unreviewed pin change.
+- Fabric's standalone worker retains its exact `@earendil-works/pi-ai@0.82.1` runtime dependency; production proof rejects any additional bundled Pi core dependency or unreviewed pin change.
 - Prompts and themes are package resource categories, not mandatory empty artifacts; none are shipped until a concrete prompt or theme is selected.

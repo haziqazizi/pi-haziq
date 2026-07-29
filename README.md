@@ -29,9 +29,9 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 | `@lll9p/pi-better-compaction` | 0.2.1 | Native Responses compact plus delegated fallback |
 | `@quintinshaw/pi-dynamic-workflows` | 3.4.1 | Sole background subagent runtime; tools captured by Fabric, runtime skills hidden |
 | `@haziqazizi/designing-dynamic-workflows` | `c0320dff` | Single visible workflow-design skill with pinned runtime adapters |
-| `pi-fabric` | 0.28.4 | Upstream deterministic host-tool runtime; agents and mesh disabled; only `fabric-exec` advertised |
+| `pi-fabric` | 0.28.6 | Upstream deterministic host-tool runtime; agents and mesh disabled; only `fabric-exec` advertised |
 
-Fabric's separate worker process intentionally carries its reviewed `@earendil-works/pi-ai@0.80.6` runtime dependency; upstream's package-manifest test rejects moving it to a host peer because the standalone worker imports it directly. Production smoke pins that sole core-runtime exception and rejects any expansion.
+Fabric's separate worker process intentionally carries its reviewed `@earendil-works/pi-ai@0.82.1` runtime dependency; upstream's package-manifest test rejects moving it to a host peer because the standalone worker imports it directly. Production smoke pins that sole core-runtime exception and rejects any expansion.
 
 `extensions/haziq-cohesion.ts` observes their public Pi surfaces and emits normalized `haziq:*` lifecycle events. It does not reimplement their algorithms. Quintin's `workflow-authoring` and `workflow-patterns` files remain bundled as runtime-owned references but are not separately advertised to the model; `designing-dynamic-workflows` loads the relevant one only when needed. Fabric's advanced skills are likewise not registered.
 
