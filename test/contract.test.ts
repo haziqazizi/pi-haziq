@@ -45,3 +45,22 @@ test("APPEND_SYSTEM freezes the approved update, reload, setup, publication, and
   assert.match(policy, /Never commit or print credentials/);
   assert.match(policy, /Herdr is optional/);
 });
+
+test("APPEND_SYSTEM names the captured tool refs it requires, not bare tool names", async () => {
+  const policy = await readFile(join(root, "APPEND_SYSTEM.md"), "utf8");
+  const tooling = policy.match(/<!-- PI_HAZIQ_TOOLING_V1 -->[\s\S]+?<!-- \/PI_HAZIQ_TOOLING_V1 -->/)?.[0] ?? "";
+  assert.notEqual(tooling, "", "tooling block must remain present");
+  assert.match(tooling, /captured by Fabric and may not appear in the model's tool list/, "the block must explain why bare tool names are unreachable");
+  assert.match(tooling, /tools\.search\(\{ query \}\)/, "agents must be told how to resolve an unknown ref");
+  for (const ref of [
+    "extensions.todo({ action: 'create', subject, activeForm })",
+    "extensions.todo({ action: 'update', id, status })",
+    "extensions.web_search",
+    "extensions.fetch_content",
+    "extensions.get_search_content",
+    "extensions.agent_browser",
+  ]) {
+    assert.ok(tooling.includes(ref), `tooling block must name the callable ref: ${ref}`);
+  }
+  assert.equal(/\buse the todo tool\b/i.test(tooling), false, "bare 'the todo tool' phrasing names no callable ref");
+});
