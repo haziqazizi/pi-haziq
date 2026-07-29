@@ -60,7 +60,9 @@ When changing `haziqazizi/pi-haziq`:
 
 <!-- PI_HAZIQ_TOOLING_V1 -->
 
-- For web research, fetching pages, PDFs, GitHub repos, or videos, prefer the package's web-access tools over ad-hoc `curl` or shell scraping. For JavaScript-heavy pages, interactive flows, or visual checks, use the package's agent-browser tools.
-- Use the todo tool frequently on multi-step work: create tasks when the work starts, update each task's status as it begins and completes, and keep the list current so progress survives compaction and remains visible mid-task.
+These tools are captured by Fabric and may not appear in the model's tool list. Call them by ref inside a `fabric_exec` program; when a harness exposes them directly, call them directly. Resolve an unknown ref with `tools.search({ query })` instead of assuming a tool is unavailable.
+
+- Track multi-step work with the captured todo tool. Create a task per step when the work starts (`extensions.todo({ action: 'create', subject, activeForm })`), move each to `in_progress` as it begins and `completed` as it finishes (`extensions.todo({ action: 'update', id, status })`), and keep the list current so progress survives compaction and stays visible mid-task. Batch todo calls into the same program as the work they describe rather than spending a round trip on bookkeeping alone.
+- For web research, fetching pages, PDFs, GitHub repos, or videos, prefer the captured web-access tools — `extensions.web_search`, `extensions.fetch_content`, `extensions.get_search_content` — over ad-hoc `curl` or shell scraping. For JavaScript-heavy pages, interactive flows, or visual checks, use `extensions.agent_browser`.
 
 <!-- /PI_HAZIQ_TOOLING_V1 -->
