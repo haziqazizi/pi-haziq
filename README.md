@@ -2,7 +2,7 @@
 
 A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed third-party extensions and first-party integration hooks.
 
-> Early development. Do not install this package alongside standalone copies of its bundled extensions; duplicate tools and lifecycle handlers may be registered.
+> Early development. Do not install this package alongside standalone copies of its packaged extensions. Duplicate tools and lifecycle handlers can be registered.
 
 ## Goals
 
@@ -16,7 +16,7 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 - Keep every Pi session on the reviewed package revision through an instruction-driven `APPEND_SYSTEM.md` contract.
 - Apply approved non-secret configuration through an explicit, previewed, and reversible `/cohesion setup` command.
 
-## Bundled components
+## Pinned package components
 
 | Package | Pin | Responsibility |
 |---|---:|---|
@@ -27,9 +27,11 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 | `pi-image-preview` | 0.1.5 | Inline image rendering |
 | `pi-mcp-adapter` | 2.14.0 | MCP gateway and server tools |
 | `@lll9p/pi-better-compaction` | 0.2.1 | Native Responses compact plus delegated fallback |
-| `@quintinshaw/pi-dynamic-workflows` | 3.4.1 | Sole background subagent runtime; tools captured by Fabric, runtime skills hidden |
+| `@quintinshaw/pi-dynamic-workflows` | `d76cdb5d` (`3.4.1`) | Sole background subagent runtime; tools captured by Fabric, runtime skills hidden |
 | `@haziqazizi/designing-dynamic-workflows` | `c0320dff` | Single visible workflow-design skill with pinned runtime adapters |
 | `pi-fabric` | 0.28.6 | Upstream deterministic host-tool runtime; agents and mesh disabled; only `fabric-exec` advertised |
+| `pi-web-access` | 0.15.0 | Web search and content fetching for pages, PDFs, GitHub repositories, and videos |
+| `pi-agent-browser-native` | 0.2.72 | Browser automation for interactive pages, JavaScript-heavy pages, and visual checks |
 
 Fabric's separate worker process intentionally carries its reviewed `@earendil-works/pi-ai@0.82.1` runtime dependency; upstream's package-manifest test rejects moving it to a host peer because the standalone worker imports it directly. Production smoke pins that sole core-runtime exception and rejects any expansion.
 
