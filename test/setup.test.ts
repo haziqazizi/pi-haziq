@@ -34,7 +34,7 @@ async function fixture(): Promise<{ root: string; paths: SetupPaths }> {
   });
   await writeJson(join(packageRoot, "config", "fabric.json"), {
     configVersion: 1, fullCodeMode: true, agents: { enabled: false }, mesh: { enabled: false },
-    capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"], risks: { workflow: "agent", workflow_control: "execute" } },
+    capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"], risks: { workflow: "agent", workflow_control: "execute", subagent: "agent", subagent_wait: "execute" } },
   });
   await writeJson(join(packageRoot, "config", "workflow-settings.json"), { keywordTriggerEnabled: false });
   return {

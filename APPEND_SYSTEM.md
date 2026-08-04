@@ -37,11 +37,36 @@ Then start Pi, run `/cohesion setup`, approve its preview, and run `/reload`. Pr
 
 Herdr is optional. When `HERDR_ENV=1`, verify that the Herdr-managed Pi integration is current through Herdr's supported integration command. Never vendor or edit `~/.pi/agent/extensions/herdr-agent-state.ts` from this package.
 
-## Fabric orchestration authoring
+## Subagent package routing
 
-Before any multi-agent workflow, load `designing-dynamic-workflows`, then read the hidden installed `pi-dynamic-workflows` authoring or pattern contract it selects. All model subagents must run through the captured Dynamic Workflow tools (`extensions.workflow` / `extensions.workflow_control`) inside `fabric_exec`; never use Fabric agents, handoff, RLM, councils, actors, or swarms. If the Dynamic capability is unavailable, stop instead of falling back. For direct Pi, MCP, captured-extension, Schema, compaction, or memory work, load `fabric-exec` and use one deterministic Fabric program; existing direct tasks do not require workflow redesign.
+This package ships two reviewed subagent surfaces. Choose one surface per job. Do not run both for the same work. Never use Fabric agents, handoff, RLM, councils, actors, or swarms.
 
-When a non-trivial build outcome is clear, first run a bounded planning workflow to identify the most efficient safe path, explicitly considering dynamic workflows, recursive decomposition only for context overflow, parallel subagents, critical-path dependencies, coordination cost, and proof gates. Sequence implementation risk-first through contracts and a thin end-to-end slice, parallelize only isolated work, integrate and verify continuously, and prefer the plan that minimizes expected wall-clock time, compute, coordination, and rework—even when that plan is one agent working directly.
+### Use `pi-subagents` for casual delegation
+
+Use Nico Bailon's `pi-subagents` when the parent only needs one or a few named roles, a short chain, or a small parallel fanout of known agent types.
+
+Examples: one reviewer, one oracle second opinion, one scout, worker then reviewer, three parallel review lanes.
+
+- Prefer plain-language delegation with builtin roles (`scout`, `researcher`, `planner`, `worker`, `reviewer`, `context-builder`, `oracle`, `delegate`).
+- Call the captured tools through `fabric_exec` as `extensions.subagent` and, only for run-to-completion waits, `extensions.subagent_wait`.
+- Load skill `pi-subagents` when the parent needs role choice, chain/parallel composition, or package constraints.
+- Do not invent a Dynamic workflow script for these jobs.
+
+### Use Dynamic Workflows for fleet orchestration
+
+Use Quintin's `@quintinshaw/pi-dynamic-workflows` when the work needs code-mode orchestration, large fan-out, model-tier routing, journaled resume, worktree isolation, budgets, or multi-phase verify/judge loops.
+
+Examples: codebase-wide audit, multi-stage research with verification, large parallel file fleet, resumable multi-phase orchestration.
+
+- Before authoring, load `designing-dynamic-workflows`, then read the hidden installed `pi-dynamic-workflows` authoring or pattern contract it selects.
+- Call the captured tools through `fabric_exec` as `extensions.workflow` and `extensions.workflow_control`.
+- If the Dynamic capability is unavailable for a fleet job, stop instead of falling back to Fabric agents or inventing a second fleet plane.
+
+### Direct non-subagent work
+
+For direct Pi, MCP, captured-extension, Schema, compaction, or memory work, load `fabric-exec` and use one deterministic Fabric program. Existing direct tasks do not require subagent or workflow redesign.
+
+When a non-trivial build outcome is clear, first run a bounded planning pass to identify the most efficient safe path, explicitly considering casual `pi-subagents` delegation, Dynamic Workflows for fleets, recursive decomposition only for context overflow, parallel subagents, critical-path dependencies, coordination cost, and proof gates. Sequence implementation risk-first through contracts and a thin end-to-end slice, parallelize only isolated work, integrate and verify continuously, and prefer the plan that minimizes expected wall-clock time, compute, coordination, and rework—even when that plan is one agent working directly.
 
 ## Authoring and publication
 
@@ -63,6 +88,8 @@ When changing `haziqazizi/pi-haziq`:
 These tools are captured by Fabric and may not appear in the model's tool list. Call them by ref inside a `fabric_exec` program; when a harness exposes them directly, call them directly. Resolve an unknown ref with `tools.search({ query })` instead of assuming a tool is unavailable.
 
 - Track multi-step work with the captured todo tool. Create a task per step when the work starts (`extensions.todo({ action: 'create', subject, activeForm })`), move each to `in_progress` as it begins and `completed` as it finishes (`extensions.todo({ action: 'update', id, status })`), and keep the list current so progress survives compaction and stays visible mid-task. Batch todo calls into the same program as the work they describe rather than spending a round trip on bookkeeping alone.
+- For casual named-role subagents, call `extensions.subagent` through `fabric_exec`. Use `extensions.subagent_wait` only for run-to-completion waits; do not poll.
+- For fleet orchestration scripts, call `extensions.workflow` and `extensions.workflow_control` through `fabric_exec`.
 - For web research, fetching pages, PDFs, GitHub repos, or videos, prefer the captured web-access tools — `extensions.web_search`, `extensions.fetch_content`, `extensions.get_search_content` — over ad-hoc `curl` or shell scraping. For JavaScript-heavy pages, interactive flows, or visual checks, use `extensions.agent_browser`.
 
 <!-- /PI_HAZIQ_TOOLING_V1 -->

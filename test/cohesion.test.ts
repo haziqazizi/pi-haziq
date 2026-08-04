@@ -88,12 +88,22 @@ test("reports missing expected tools without throwing", () => {
   assert.deepEqual(complete.missing, []);
 });
 
-test("requires the approved sole-subagent runtime configuration", () => {
+test("requires the approved dual-subagent runtime configuration", () => {
   const healthy = inspectRuntimeConfiguration(
     {
       configVersion: 1, fullCodeMode: true,
       agents: { enabled: false }, mesh: { enabled: false },
-      capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"], risks: { workflow: "agent", workflow_control: "execute" } },
+      capture: {
+        enabled: true,
+        hideFromModel: true,
+        keepVisible: ["fabric_exec"],
+        risks: {
+          workflow: "agent",
+          workflow_control: "execute",
+          subagent: "agent",
+          subagent_wait: "execute",
+        },
+      },
     },
     { keywordTriggerEnabled: false },
   );
@@ -106,6 +116,8 @@ test("requires the approved sole-subagent runtime configuration", () => {
   assert.ok(drift.problems.some((problem) => /agents/.test(problem)));
   assert.ok(drift.problems.some((problem) => /keyword/.test(problem)));
   assert.ok(drift.problems.some((problem) => /Only fabric_exec/.test(problem)));
+  assert.ok(drift.problems.some((problem) => /Subagent launch risk/.test(problem)));
+  assert.ok(drift.problems.some((problem) => /Subagent wait risk/.test(problem)));
 });
 
 test("extracts workflow run IDs from typed details and fallback text", () => {

@@ -10,7 +10,8 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 - Use native `/responses/compact` for Responses-family sessions.
 - Delegate Anthropic-style text compaction to `tokenmaxxing/gpt-5.6-sol`.
 - Refresh Meridian's live model catalog while preserving conservative local capabilities when the endpoint lists IDs only.
-- Correlate todo tasks, dynamic workflows, loops, MCP calls, compaction, and artifacts through versioned Pi events.
+- Route casual named-role subagents through `pi-subagents` and fleet orchestration through Dynamic Workflows.
+- Correlate todo tasks, named subagents, dynamic workflows, loops, MCP calls, compaction, and artifacts through versioned Pi events.
 - Enrich Herdr panes when `HERDR_ENV=1` without bundling or replacing Herdr's managed Pi integration.
 - Fail open with visible diagnostics when an optional integration is unavailable.
 - Keep every Pi session on the reviewed package revision through an instruction-driven `APPEND_SYSTEM.md` contract.
@@ -27,15 +28,16 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 | `pi-image-preview` | 0.1.5 | Inline image rendering |
 | `pi-mcp-adapter` | 2.14.0 | MCP gateway and server tools |
 | `@lll9p/pi-better-compaction` | 0.2.1 | Native Responses compact plus delegated fallback |
-| `@quintinshaw/pi-dynamic-workflows` | `d76cdb5d` (`3.4.1`) | Sole background subagent runtime; tools captured by Fabric, runtime skills hidden |
-| `@haziqazizi/designing-dynamic-workflows` | `c0320dff` | Single visible workflow-design skill with pinned runtime adapters |
+| `pi-subagents` | 0.40.0 | Casual named-role delegation (`subagent` / `subagent_wait`); tools captured by Fabric; parent skill advertised |
+| `@quintinshaw/pi-dynamic-workflows` | `d76cdb5d` (`3.4.1`) | Fleet orchestration runtime; tools captured by Fabric, runtime skills hidden |
+| `@haziqazizi/designing-dynamic-workflows` | `c0320dff` | Single visible Dynamic doctrine skill with pinned runtime adapters |
 | `pi-fabric` | 0.28.6 | Upstream deterministic host-tool runtime; agents and mesh disabled; only `fabric-exec` advertised |
 | `pi-web-access` | 0.15.0 | Web search and content fetching for pages, PDFs, GitHub repositories, and videos |
 | `pi-agent-browser-native` | 0.2.72 | Browser automation for interactive pages, JavaScript-heavy pages, and visual checks |
 
 Fabric's separate worker process intentionally carries its reviewed `@earendil-works/pi-ai@0.82.1` runtime dependency; upstream's package-manifest test rejects moving it to a host peer because the standalone worker imports it directly. Production smoke pins that sole core-runtime exception and rejects any expansion.
 
-`extensions/haziq-cohesion.ts` observes their public Pi surfaces and emits normalized `haziq:*` lifecycle events. It does not reimplement their algorithms. Quintin's `workflow-authoring` and `workflow-patterns` files remain bundled as runtime-owned references but are not separately advertised to the model; `designing-dynamic-workflows` loads the relevant one only when needed. Fabric's advanced skills are likewise not registered.
+`extensions/haziq-cohesion.ts` observes their public Pi surfaces and emits normalized `haziq:*` lifecycle events. It does not reimplement their algorithms. Casual one-or-few named roles use `pi-subagents`; large fan-out, resume, worktree isolation, and multi-phase verify loops use Dynamic Workflows. The package contract in `APPEND_SYSTEM.md` routes between those surfaces. Quintin's `workflow-authoring` and `workflow-patterns` files remain bundled as runtime-owned references but are not separately advertised to the model; `designing-dynamic-workflows` loads the relevant one only when needed. Fabric's advanced skills are likewise not registered.
 
 This package requires Node.js 24 or newer because Fabric's sandbox runtime does.
 
@@ -110,7 +112,7 @@ Inside Pi:
 /cohesion setup
 ```
 
-The doctor reports expected captured tools, sole-subagent runtime configuration drift, the active model/API, compaction strategy, service-tier state, active todo/workflow correlation, Herdr availability, machine configuration presence, and the last Meridian refresh result with published/capability model counts and timestamp. Configuration drift is repaired explicitly with `/cohesion setup`, followed by `/reload`.
+The doctor reports expected captured tools, dual-subagent runtime configuration drift, the active model/API, compaction strategy, service-tier state, active todo/workflow correlation, Herdr availability, machine configuration presence, and the last Meridian refresh result with published/capability model counts and timestamp. Configuration drift is repaired explicitly with `/cohesion setup`, followed by `/reload`.
 
 Pi refreshes dynamic model providers during online startup, model-picker refresh, and `pi update`. Meridian discovery reads the global `~/.pi/agent/models.json` provider configuration only; project files cannot change its endpoint or credentials. Current Meridian `/v1/models` responses list model IDs, so local `contextWindow` and `maxTokens` values remain authoritative until Meridian publishes validated capability fields.
 
