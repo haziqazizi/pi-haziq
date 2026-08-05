@@ -24,7 +24,7 @@ Run:
 /cohesion doctor
 ```
 
-Expected: `healthy` and `Tools: 8/8 · Fabric-captured`. Run `/fabric captured` to inspect the exact lazy inventory without exposing those schemas to the parent model.
+Expected: `healthy` and `Tools: 10/10 · Fabric-captured`. Run `/fabric captured` to inspect the exact lazy inventory without exposing those schemas to the parent model.
 
 ## 3. Install the package
 
@@ -45,6 +45,7 @@ npm:pi-image-preview
 npm:pi-mcp-adapter@2.11.0
 npm:@lll9p/pi-better-compaction
 npm:@quintinshaw/pi-dynamic-workflows@3.4.1
+npm:pi-subagents
 npm:pi-fabric
 ```
 
@@ -66,7 +67,7 @@ The first command is read-only. The second shows a key-only, value-redacted prev
 - links the package-owned `APPEND_SYSTEM.md` into Pi's global agent directory (`getAgentDir()`);
 - merges `config/settings.fragment.json` without changing the chosen default provider/model or package list;
 - merges the better-compaction, service-tier, and workflow-tier templates where those pinned owners actually read them;
-- disables Fabric agents/mesh, keeps only `fabric_exec` visible, captures Dynamic tools with explicit risks, and disables Dynamic's competing keyword trigger.
+- disables Fabric agents/mesh, keeps only `fabric_exec` visible, captures Dynamic and `pi-subagents` tools with explicit risks, and disables Dynamic's competing keyword trigger.
 
 It never touches `auth.json`, `models.json`, provider credentials, MCP authentication, sessions, trust decisions, or caches. If an owned JSON target is malformed, an unexpected configuration symlink is present, or any target changes after preview, setup fails before changing files. Pi agent-directory overrides are honored for Pi-owned files; pinned extensions that hardcode `~/.pi` continue to receive config there.
 

@@ -8,11 +8,11 @@ This is the durable reconciliation of the package decisions approved in Pi sessi
 |---|---|---|
 | One Git install composes the reviewed extension set. | `package.json` exact dependencies and `pi.extensions` entries | package and production-tarball smokes |
 | Third-party versions are pinned and reviewed before updates. | `package.json`, `package-lock.json`, `AGENTS.md` | TypeScript/package tests and production audit |
-| Dynamic Workflows is the sole subagent runtime behind Fabric capture; its pinned runtime-owned authoring and pattern contracts remain hidden and one doctrine skill owns routing. | upstream Dynamic pin, `designing-dynamic-workflows` pin, extension/capture manifest, and `pi.skills` allowlist | manifest, routing checks, and isolated package smokes |
-| Reviewed upstream Fabric is bundled in full code mode as the deterministic host-tool runtime; agents and mesh are disabled, only `fabric-exec` is advertised, and Dynamic tools remain captured. | exact upstream `pi-fabric` pin, approved `fabric.json`, and package resource allowlist | setup/doctor tests, captured inventory, denial probes, and production-tarball smokes |
+| Dual reviewed subagent surfaces are packaged: `pi-subagents` for casual named-role delegation and Dynamic Workflows for fleet orchestration; Fabric agents stay off; `APPEND_SYSTEM.md` routes which surface to use. | `pi-subagents` pin, upstream Dynamic pin, `designing-dynamic-workflows` pin, extension/capture manifest, skills allowlist, and package contract | manifest, routing checks, and isolated package smokes |
+| Reviewed upstream Fabric is bundled in full code mode as the deterministic host-tool runtime; agents and mesh are disabled, only `fabric_exec` is advertised, and both subagent surfaces remain captured. | exact upstream `pi-fabric` pin, approved `fabric.json`, and package resource allowlist | setup/doctor tests, captured inventory, denial probes, and production-tarball smokes |
 | Opus/Anthropic-style sessions use delegated GPT compaction; Responses models use native compact. | `config/pi-better-compaction.json`, cohesion capability derivation | unit and live package tests |
 | The user's default model remains a user setting. | configuration fragment deliberately omits default provider/model | setup idempotence test |
-| Todo, workflow, loop, MCP, compaction, service tier, models, and Herdr share bounded correlation and diagnostics. | `extensions/haziq-cohesion.ts` and compatibility wrappers | cohesion, trust, reload, Herdr, and package tests |
+| Todo, named subagent, workflow, loop, MCP, compaction, service tier, models, and Herdr share bounded correlation and diagnostics. | `extensions/haziq-cohesion.ts` and compatibility wrappers | cohesion, trust, reload, Herdr, and package tests |
 | Meridian refreshes dynamically and fails open to safe static models. | `extensions/haziq-meridian-refresh.ts` | Meridian unit, package, and live smokes |
 | Machine and project trust boundaries remain intact. | MCP and service-tier wrappers | trust smoke |
 | A Pi-readable package preamble checks revisions before/after updates and requires publication of authorized package changes. | `APPEND_SYSTEM.md` | packaged-file and live prompt proof |
@@ -29,7 +29,8 @@ These were discussed but explicitly not first-release requirements or would viol
 - Pi's managed Git clone is never an authoring checkout.
 - Package loading never silently rewrites machine configuration; `/cohesion setup` requires a user-visible preview and confirmation.
 - Herdr pane-backed workflow workers and a dedicated workflow-monitor pane remain experimental/optional, not package prerequisites.
-- Fabric advisors, supervisors, actors, swarms, handoff, RLM, councils, trajectory judging, retained-branch integration, and mesh-backed postmortems are intentionally unavailable in the sole-Dynamic-subagent profile.
+- Fabric advisors, supervisors, actors, swarms, handoff, RLM, councils, trajectory judging, retained-branch integration, and mesh-backed postmortems remain unavailable; subagents use only the packaged `pi-subagents` and Dynamic Workflows surfaces.
+- One job uses one subagent surface: casual named roles through `pi-subagents`, fleets through Dynamic Workflows. Do not dual-launch both for the same work.
 - Cohesion does not invent provider-switch, workflow-progress, artifact, or task-loop semantics when an owning extension exposes no stable public event. It observes public Pi hooks and pinned compatibility seams instead.
 - Cohesion does not complete todos automatically. A delivered workflow must be verified at a faithful surface first.
 - Fabric's standalone worker retains its exact `@earendil-works/pi-ai@0.82.1` runtime dependency; production proof rejects any additional bundled Pi core dependency or unreviewed pin change.
