@@ -4,7 +4,6 @@ import { dirname, join, resolve } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import piFabric from "pi-fabric";
 import { pinFabricLaunchBinaries } from "../src/fabric-binaries.ts";
-import { ensureFabricRuntimePrefersNodeOverride } from "../src/fabric-runtime-patch.ts";
 import { ensureFabricHerdrSameTabTransport } from "../src/herdr-same-tab.ts";
 
 export const FABRIC_CAPTURED_TOOLS_EVENT = "haziq:fabric-captured-tools:v1";
@@ -77,11 +76,8 @@ export function fabricStateRootFallback(
 }
 
 export default async function haziqFabric(pi: ExtensionAPI) {
-  // Herdr child panes do not inherit interactive PATH. Pin absolute pi/node
-  // before Fabric constructs agent transports so workers do not `spawn pi ENOENT`,
-  // and prefer PI_FABRIC_NODE_BINARY (PATH launcher) over process.execPath.
+  // Herdr children: absolute pi + PATH injected on pane launch (no node wrapper).
   pinFabricLaunchBinaries();
-  ensureFabricRuntimePrefersNodeOverride();
   ensureFabricHerdrSameTabTransport();
 
   const fallbackRoot = fabricStateRootFallback(process.cwd());

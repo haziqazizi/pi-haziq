@@ -1,4 +1,4 @@
-import { accessSync, constants, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { accessSync, constants, existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, delimiter, dirname, isAbsolute, join } from "node:path";
 
@@ -60,10 +60,8 @@ function isJsEntrypoint(path: string): boolean {
 }
 
 /**
- * Resolve an absolute path to the pi CLI for Fabric child workers.
- * Prefer a JS entrypoint (cli.js) so Fabric's worker can spawn it with
- * process.execPath/node — bash wrappers that call `/usr/bin/env node` fail
- * in Herdr panes with a minimal PATH (`spawn pi ENOENT` / missing node).
+ * Resolve an absolute path to the pi CLI / cli.js for Fabric children.
+ * Bare "pi" fails under Herdr panes with a minimal PATH.
  */
 export function resolvePiBinary(lookup: BinaryLookup = {}): string {
   const env = lookup.env ?? process.env;
@@ -100,10 +98,7 @@ export function resolvePiBinary(lookup: BinaryLookup = {}): string {
     if (candidate && isJsEntrypoint(candidate) && readableFile(candidate)) return candidate;
   }
 
-  const homeCandidates = [
-    join(home, ".pi", "agent", "bin", "pi"),
-    join(home, ".local", "bin", "pi"),
-  ];
+  const homeCandidates = [join(home, ".pi", "agent", "bin", "pi"), join(home, ".local", "bin", "pi")];
   if (platform === "win32") {
     homeCandidates.push(join(home, ".pi", "agent", "bin", "pi.cmd"), join(home, ".local", "bin", "pi.cmd"));
   }
@@ -116,6 +111,7 @@ export function resolvePiBinary(lookup: BinaryLookup = {}): string {
   return override || "pi";
 }
 
+/** Resolve absolute node/bun for documentation and PATH construction. */
 export function resolveNodeBinary(lookup: BinaryLookup = {}): string {
   const env = lookup.env ?? process.env;
   const platform = lookup.platform ?? process.platform;
@@ -123,16 +119,16 @@ export function resolveNodeBinary(lookup: BinaryLookup = {}): string {
   const pathDirs = pathDirsFrom(env, lookup.pathDirs);
 
   const override = envValue(env, "PI_FABRIC_NODE_BINARY");
-  // Ignore our own launcher when resolving the real runtime.
+  // Ignore legacy launcher path if still set from older installs.
   if (
     override &&
     isAbsolute(override) &&
     isExecutableFile(override) &&
-    !override.endsWith(`${basename(launcherName(platform))}`)
+    !basename(override).startsWith("pi-fabric-node")
   ) {
     return override;
   }
-  if (override && !isAbsolute(override)) {
+  if (override && !isAbsolute(override) && !override.includes("pi-fabric-node")) {
     const fromPath = candidateInPath(override, pathDirs, platform);
     if (fromPath) return fromPath;
   }
@@ -141,7 +137,6 @@ export function resolveNodeBinary(lookup: BinaryLookup = {}): string {
   if (/^(node|bun)(\.exe)?$/.test(base) && isExecutableFile(execPath)) {
     return execPath;
   }
-
   for (const name of ["node", "bun"] as const) {
     const found = candidateInPath(name, pathDirs, platform);
     if (found) return found;
@@ -149,11 +144,7 @@ export function resolveNodeBinary(lookup: BinaryLookup = {}): string {
   return "node";
 }
 
-function launcherName(platform: NodeJS.Platform): string {
-  return platform === "win32" ? "pi-fabric-node.cmd" : "pi-fabric-node";
-}
-
-/** Build a PATH that includes node/npx and common user bins for Herdr children. */
+/** Curated PATH for Herdr children: parent PATH + node dir + common user bins. */
 export function buildFabricChildPath(lookup: BinaryLookup & { nodeBinary?: string } = {}): string {
   const env = lookup.env ?? process.env;
   const home = lookup.home ?? homedir();
@@ -179,69 +170,32 @@ export function buildFabricChildPath(lookup: BinaryLookup & { nodeBinary?: strin
 }
 
 /**
- * Write a tiny launcher that exports an augmented PATH then execs the real node.
- * Herdr layout.apply runs the worker argv without a login shell; this is how we
- * get npx/node tools onto PATH for extension startup inside child panes.
- */
-export function ensureFabricNodeLauncher(lookup: BinaryLookup & { nodeBinary?: string } = {}): string {
-  const env = lookup.env ?? process.env;
-  const home = lookup.home ?? homedir();
-  const platform = lookup.platform ?? process.platform;
-  const nodeBinary = lookup.nodeBinary ?? resolveNodeBinary(lookup);
-  const pathValue = buildFabricChildPath({ ...lookup, nodeBinary });
-  const binDir = join(home, ".pi", "agent", "bin");
-  mkdirSync(binDir, { recursive: true });
-  const launcherPath = join(binDir, launcherName(platform));
-
-  if (platform === "win32") {
-    const body = `@echo off\r\nset "PATH=${pathValue}"\r\n"${nodeBinary}" %*\r\n`;
-    writeFileSync(launcherPath, body, { encoding: "utf8" });
-  } else {
-    const body = [
-      "#!/usr/bin/env bash",
-      "set -euo pipefail",
-      `export PATH=${JSON.stringify(pathValue)}`,
-      `exec ${JSON.stringify(nodeBinary)} "$@"`,
-      "",
-    ].join("\n");
-    writeFileSync(launcherPath, body, { encoding: "utf8", mode: 0o755 });
-    try {
-      accessSync(launcherPath, constants.X_OK);
-    } catch {
-      // best effort
-    }
-  }
-  return launcherPath;
-}
-
-/**
- * Pin Fabric child launch binaries to absolute paths for the process lifetime.
- * Also installs a PATH-injecting node launcher so Herdr children can resolve npx.
+ * Pin absolute pi binary and a child PATH string for Herdr --env injection.
+ * Does not install a node launcher or patch Fabric process-utils.
  */
 export function pinFabricLaunchBinaries(lookup: BinaryLookup = {}): {
   piBinary: string;
   nodeBinary: string;
-  launcherBinary: string;
   path: string;
   env: NodeJS.ProcessEnv;
 } {
   const env = lookup.env ?? process.env;
   const piBinary = resolvePiBinary(lookup);
-  const realNode = resolveNodeBinary(lookup);
-  const pathValue = buildFabricChildPath({ ...lookup, nodeBinary: realNode });
-  const launcherBinary = ensureFabricNodeLauncher({ ...lookup, nodeBinary: realNode });
+  const nodeBinary = resolveNodeBinary(lookup);
+  const pathValue = buildFabricChildPath({ ...lookup, nodeBinary });
 
   if (isAbsolute(piBinary) && (isExecutableFile(piBinary) || readableFile(piBinary))) {
     env.PI_FABRIC_PI_BINARY = piBinary;
   }
-  // Point Fabric worker runtime at the PATH-injecting launcher.
-  if (isAbsolute(launcherBinary) && isExecutableFile(launcherBinary)) {
-    env.PI_FABRIC_NODE_BINARY = launcherBinary;
-  } else if (isAbsolute(realNode) && isExecutableFile(realNode)) {
-    env.PI_FABRIC_NODE_BINARY = realNode;
+  // Prefer real absolute node when set; clear legacy launcher override so Fabric
+  // uses process.execPath (node) + PATH env on the Herdr pane instead.
+  if (isAbsolute(nodeBinary) && isExecutableFile(nodeBinary)) {
+    env.PI_FABRIC_NODE_BINARY = nodeBinary;
+  } else if (env.PI_FABRIC_NODE_BINARY && basename(String(env.PI_FABRIC_NODE_BINARY)).startsWith("pi-fabric-node")) {
+    delete env.PI_FABRIC_NODE_BINARY;
   }
-  // Parent process also gets the augmented PATH for process-transport children.
   env.PATH = pathValue;
+  env.PI_FABRIC_CHILD_PATH = pathValue;
 
-  return { piBinary, nodeBinary: realNode, launcherBinary, path: pathValue, env };
+  return { piBinary, nodeBinary, path: pathValue, env };
 }

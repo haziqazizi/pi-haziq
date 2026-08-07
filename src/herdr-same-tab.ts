@@ -3,7 +3,7 @@ import { execFile } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const MARKER = "PI_HAZIQ_HERDR_SAME_TAB_V1";
+const MARKER = "PI_HAZIQ_HERDR_SAME_TAB_V2";
 
 function findHerdrTransport(startDir: string): string | undefined {
   let dir = startDir;
@@ -82,6 +82,21 @@ export function argvToExecCommand(argv: string[]): string {
  * Replace Fabric's HerdrTransport so children open as sibling splits in the
  * caller's current tab (machine herdr skill default), not new background tabs.
  */
+
+/** Rewrite bare --pi-binary pi to an absolute path when env provides one. */
+export function rewriteWorkerArgv(argv: string[], env: NodeJS.ProcessEnv = process.env): string[] {
+  const absolutePi = env.PI_FABRIC_PI_BINARY;
+  if (!absolutePi || typeof absolutePi !== "string") return [...argv];
+  if (!(absolutePi.startsWith("/") || /^[A-Za-z]:[\/]/.test(absolutePi))) return [...argv];
+  const out = [...argv];
+  for (let i = 0; i < out.length - 1; i += 1) {
+    if (out[i] === "--pi-binary" && (out[i + 1] === "pi" || out[i + 1] === "pi.exe")) {
+      out[i + 1] = absolutePi;
+    }
+  }
+  return out;
+}
+
 export function ensureFabricHerdrSameTabTransport(
   startDir: string = dirname(fileURLToPath(import.meta.url)),
 ): { patched: boolean; path: string; reason?: string } {
@@ -121,6 +136,16 @@ export function ensureFabricHerdrSameTabTransport(
     '    return "exec " + argv.map(shellQuote).join(" ");',
     '};',
     '',
+    'const rewriteWorkerArgv = (argv, env) => {',
+    '  const absolutePi = env?.PI_FABRIC_PI_BINARY;',
+    '  if (!absolutePi || typeof absolutePi !== "string") return Array.isArray(argv) ? [...argv] : [];',
+    '  const out = [...argv];',
+    '  for (let i = 0; i < out.length - 1; i += 1) {',
+    '    if (out[i] === "--pi-binary" && (out[i + 1] === "pi" || out[i + 1] === "pi.exe")) out[i + 1] = absolutePi;',
+    '  }',
+    '  return out;',
+    '};',
+    '',
     'const chooseDirection = async (paneId, env) => {',
     '    try {',
     '        const { stdout } = await execHerdr(["pane", "layout", "--pane", paneId], env);',
@@ -145,9 +170,9 @@ export function ensureFabricHerdrSameTabTransport(
     '        const parentTabId = this.environment.HERDR_TAB_ID;',
     '        if (!parentPaneId) throw new Error("Herdr same-tab transport requires HERDR_PANE_ID");',
     '        const direction = await chooseDirection(parentPaneId, this.environment);',
-    '        const command = await scriptSpawnArgs(request.workerPath, request.workerArguments);',
+    '        const rawCommand = await scriptSpawnArgs(request.workerPath, request.workerArguments); const command = rewriteWorkerArgv(rawCommand, this.environment); const childPath = this.environment.PI_FABRIC_CHILD_PATH || this.environment.PATH || "";',
     '        const splitArgs = ["pane", "split", parentPaneId, "--direction", direction, "--no-focus", "--cwd", request.cwd];',
-    '        if (this.environment.PATH) splitArgs.push("--env", "PATH=" + this.environment.PATH);',
+    '        if (childPath) splitArgs.push("--env", "PATH=" + childPath); if (childPath) splitArgs.push("--env", "PI_FABRIC_CHILD_PATH=" + childPath);',
     '        if (this.environment.PI_FABRIC_PI_BINARY) splitArgs.push("--env", "PI_FABRIC_PI_BINARY=" + this.environment.PI_FABRIC_PI_BINARY);',
     '        if (this.environment.PI_FABRIC_NODE_BINARY) splitArgs.push("--env", "PI_FABRIC_NODE_BINARY=" + this.environment.PI_FABRIC_NODE_BINARY);',
     '        const splitPayload = parseJson((await execHerdr(splitArgs, this.environment)).stdout);',
@@ -159,7 +184,7 @@ export function ensureFabricHerdrSameTabTransport(
     '            throw new Error("herdr same-tab split landed in " + tabId + ", expected " + parentTabId);',
     '        }',
     '        if (request.name) { try { await execHerdr(["pane", "rename", paneId, request.name], this.environment); } catch {} }',
-    '        await execHerdr(["pane", "run", paneId, argvToExecCommand(command)], this.environment);',
+    '        const runLine = childPath ? ("export PATH=" + shellQuote(childPath) + "; " + argvToExecCommand(command)) : argvToExecCommand(command); await execHerdr(["pane", "run", paneId, runLine], this.environment);',
     '        let terminalId = paneField(splitPayload, "terminal_id");',
     '        try { terminalId = paneField(parseJson((await execHerdr(["pane", "get", paneId], this.environment)).stdout), "terminal_id") ?? terminalId; } catch {}',
     '        return {',
