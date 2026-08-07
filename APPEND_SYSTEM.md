@@ -35,11 +35,9 @@ pi install git:github.com/haziqazizi/pi-haziq
 
 Then start Pi, run `/cohesion setup`, approve its preview, and run `/reload`. Provider credentials, `auth.json`, `models.json`, MCP authentication, sessions, trust decisions, and machine inventories remain machine-local and must be provisioned separately through approved secret mechanisms.
 
-Herdr is a **required runtime dependency** for the default Fabric agent transport. Install the `herdr` CLI from https://herdr.dev before or with package setup. `/cohesion setup` runs `herdr integration install pi` when the CLI is present; it never vendors or edits `~/.pi/agent/extensions/herdr-agent-state.ts` itself. When `HERDR_ENV=1`, cohesion also verifies the live pane integration.
-
 ## Multi-agent and Fabric skill routing
 
-This package uses **Fabric** as the multi-agent plane. Dynamic Workflows are not packaged.
+This package uses **Fabric** as the multi-agent plane.
 
 ### Router
 
@@ -48,8 +46,10 @@ When unsure which advanced Fabric path to use, run **`/skill:fabric-guide`**. It
 ### Core path
 
 - Normal coding: `fabric_exec` + skill `fabric-exec` as needed.
-- Casual children: `agents.run` / `agents.spawn` / `agents.wait` inside `fabric_exec` (Fabric agents enabled; default transport `herdr` opens each child in a background Herdr tab).
-- Mesh is **on** by default so ambient actors, supervisors, and swarm coordination can restore. Prefer `fabric-workflow` / agents for one-shot fan-out; use swarm when durable multi-actor work is required.
+- Casual children: `agents.run` / `agents.spawn` / `agents.wait` inside `fabric_exec` (Fabric agents enabled).
+- Default agent transport is **`process`** (detached worker). Do not assume Herdr exists.
+- When `HERDR_ENV=1` and the host configures `agents.transport` to `herdr`, children may open in Herdr panes. That path is optional host enrichment only.
+- Mesh is **on** by default so ambient actors and swarm coordination can restore. Prefer `fabric-workflow` / agents for one-shot fan-out; use swarm when durable multi-actor work is required.
 
 ### User-invoked Fabric skills (all enabled)
 
@@ -70,9 +70,7 @@ When unsure which advanced Fabric path to use, run **`/skill:fabric-guide`**. It
 ### Outside Fabric (still packaged)
 
 - Monty `/loop` / `start_loop` — verify-before-done on the main session.
-- Monty `/supervise` — standalone outcome supervision.
 - `todo` (rpiv-todo) — checklist overlay.
-- Do **not** install Nico Bailon `pi-subagents`.
 
 ### Direct work
 
@@ -103,7 +101,6 @@ These tools are captured by Fabric and may not appear in the model's tool list. 
 - Track multi-step work with the captured todo tool. Create a task per step when the work starts (`extensions.todo({ action: 'create', subject, activeForm })`), move each to `in_progress` as it begins and `completed` as it finishes (`extensions.todo({ action: 'update', id, status })`), and keep the list current so progress survives compaction and stays visible mid-task. Batch todo calls into the same program as the work they describe rather than spending a round trip on bookkeeping alone.
 - For casual child agents, call `agents.run` / `agents.spawn` inside `fabric_exec` (Fabric agents enabled).
 - For verify-before-done task closure, use Monty `/loop` / `start_loop` (not a scheduled prompt timer).
-- For fleet orchestration scripts, call `extensions.workflow` and `extensions.workflow_control` through `fabric_exec`.
 - For web research, fetching pages, PDFs, GitHub repos, or videos, prefer the captured web-access tools — `extensions.web_search`, `extensions.fetch_content`, `extensions.get_search_content` — over ad-hoc `curl` or shell scraping. For JavaScript-heavy pages, interactive flows, or visual checks, use `extensions.agent_browser`.
 
 <!-- /PI_HAZIQ_TOOLING_V1 -->

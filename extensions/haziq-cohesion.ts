@@ -373,7 +373,7 @@ export default function haziqCohesion(pi: ExtensionAPI) {
       `Active todo: ${snapshot.activeTodoId === undefined ? "none" : `#${snapshot.activeTodoId}`}`,
       `Running workflows: ${running.length === 0 ? "none" : running.join(", ")}`,
       `Herdr session: ${!herdrEnabled ? "not active" : herdrOperational === false ? "failed" : herdrOperational === true ? "connected" : "detecting"}`,
-      `Herdr dependency: ${herdrDependency?.status ?? "unchecked"}`,
+      `Herdr dependency (optional): ${herdrDependency?.status ?? "unchecked"}`,
       ...(herdrDependency && herdrDependency.status !== "ready"
         ? [herdrDependency.message, ...(herdrDependency.details ? [herdrDependency.details] : [])]
         : []),
@@ -431,7 +431,8 @@ export default function haziqCohesion(pi: ExtensionAPI) {
           const changed = operations.filter((operation) => operation.status !== "unchanged");
           const herdrBefore = await refreshHerdrDependency();
           const herdrReport = formatHerdrDependencyReport(herdrBefore);
-          const herdrNeedsWork = herdrBefore.status !== "ready";
+          // Optional only: install integration when CLI exists and integration file is missing.
+          const herdrNeedsWork = herdrBefore.status === "missing-integration";
           if (setupAction === "check") {
             ctx.ui.notify(
               [report, "", herdrReport].join("\n"),
@@ -459,9 +460,9 @@ export default function haziqCohesion(pi: ExtensionAPI) {
               "",
               "Existing changed files are backed up. Provider credentials and auth files are never touched.",
               herdrBefore.status === "missing-binary"
-                ? "Herdr CLI is missing: install from https://herdr.dev before agent transport will work."
+                ? "Herdr CLI not installed (optional). Default Fabric agent transport is process."
                 : herdrNeedsWork
-                  ? "If you confirm, setup will run: herdr integration install pi"
+                  ? "Optional: if you confirm, setup will run: herdr integration install pi"
                   : "Herdr dependency is already ready.",
             ].join("\n"),
           );
@@ -521,8 +522,8 @@ export default function haziqCohesion(pi: ExtensionAPI) {
         queueHerdrMetadata();
         const healthy =
           toolHealth.status === "healthy" && runtimeConfigHealth.status === "healthy";
-        const herdrReady = herdrDependency?.status === "ready";
-        ctx.ui.notify(doctorReport(), healthy && herdrReady !== false ? "info" : "warning");
+        // Herdr is optional enrichment; missing CLI does not fail package health.
+        ctx.ui.notify(doctorReport(), healthy ? "info" : "warning");
         return;
       }
       ctx.ui.notify("Usage: /cohesion [status|doctor|events|contract|reload|setup [check]]", "warning");

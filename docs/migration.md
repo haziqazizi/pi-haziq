@@ -65,8 +65,8 @@ The first command is read-only. The second shows a key-only, value-redacted prev
 
 - links the package-owned `APPEND_SYSTEM.md` into Pi's global agent directory (`getAgentDir()`);
 - merges `config/settings.fragment.json` without changing the chosen default provider/model or package list;
-- merges the better-compaction, service-tier, and workflow-tier templates where those pinned owners actually read them;
-- enables Fabric agents for casual children, keeps mesh off, keeps only `fabric_exec` visible, captures Dynamic workflow tools with explicit risks, disables Dynamic's competing keyword trigger, and removes packaged `pi-subagents`.
+- merges the better-compaction and service-tier templates where those pinned owners actually read them;
+- enables Fabric agents for casual children, default transport `process`, mesh on in packaged fabric.json, keeps only `fabric_exec` visible among tools.
 
 It never touches `auth.json`, `models.json`, provider credentials, MCP authentication, sessions, trust decisions, or caches. If an owned JSON target is malformed, an unexpected configuration symlink is present, or any target changes after preview, setup fails before changing files. Pi agent-directory overrides are honored for Pi-owned files; pinned extensions that hardcode `~/.pi` continue to receive config there.
 
@@ -114,12 +114,12 @@ Also verify:
 - Restore all targets from the same setup run before reloading; do not mix timestamps from different runs.
 - Then run `/reload` and `/cohesion doctor`.
 
-The affected target set is the seven mappings in step 5: global append policy, settings fragment, better compaction, service tier, workflow tiers, Fabric runtime policy, and Dynamic Workflow settings. The package does not modify or own provider authentication.
+The affected target set is five mappings: global append policy, settings fragment, better compaction, service tier, and Fabric runtime policy. The package does not modify or own provider authentication.
 
 ## Monty loop and long-run helpers
 
-Remove standalone `npm:@koltmcbride/pi-loop` if present. This package now ships `@monotykamary/pi-loop` (verification loop), not the Kolt scheduled loop. Also packaged: `@monotykamary/pi-supervisor`, `pi-reason-harness`, `pi-invisible-continue`, `pi-autoresearch-harness`, and Monty's `pi-queue-steer` pin. Fabric is pinned to `0.40.1`.
+Remove standalone `npm:@koltmcbride/pi-loop` if present. This package now ships `@monotykamary/pi-loop` (verification loop), not the Kolt scheduled loop. Also packaged: `pi-reason-harness`, `pi-invisible-continue`, `pi-autoresearch-harness`, and Monty's `pi-queue-steer` pin. Fabric is pinned to `0.40.1`.
 
-## Remove Dynamic Workflows
+## Historical note: Dynamic Workflows (removed)
 
 This package no longer ships `@quintinshaw/pi-dynamic-workflows` or `designing-dynamic-workflows`. Remove any standalone installs. Use Fabric skills (`/skill:fabric-guide`, `fabric-workflow`, agents) instead.

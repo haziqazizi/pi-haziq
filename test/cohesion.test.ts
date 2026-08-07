@@ -89,14 +89,14 @@ test("reports missing expected tools without throwing", () => {
   assert.deepEqual(complete.missing, []);
 });
 
-test("requires Fabric agents on, mesh on, herdr transport, and capture policy", () => {
+test("requires Fabric agents on, mesh on, process-or-herdr transport, and capture policy", () => {
   const healthy = inspectRuntimeConfiguration(
     {
       configVersion: 3,
       fullCodeMode: true,
       agents: {
         enabled: true,
-        transport: "herdr",
+        transport: "process",
         extensions: true,
         defaultTools: ["read", "bash", "edit", "write", "grep", "find", "ls", "todo"],
       },
@@ -113,14 +113,14 @@ test("requires Fabric agents on, mesh on, herdr transport, and capture policy", 
     {
       configVersion: 3,
       fullCodeMode: true,
-      agents: { enabled: false, transport: "process", extensions: false, defaultTools: ["read"] },
+      agents: { enabled: false, transport: "bogus", extensions: false, defaultTools: ["read"] },
       mesh: { enabled: false },
       capture: { enabled: true, hideFromModel: false, keepVisible: ["fabric_exec", "todo"] },
     },
   );
   assert.equal(drift.status, "degraded");
   assert.ok(drift.problems.some((problem) => /Fabric agents must be enabled/.test(problem)));
-  assert.ok(drift.problems.some((problem) => /transport must be herdr/.test(problem)));
+  assert.ok(drift.problems.some((problem) => /transport must be process \(default\) or herdr/.test(problem)));
   assert.ok(drift.problems.some((problem) => /mesh must be enabled/.test(problem)));
   assert.ok(drift.problems.some((problem) => /Only fabric_exec/.test(problem)));
   assert.ok(drift.problems.some((problem) => /defaultTools must include bash/.test(problem)));
@@ -239,11 +239,11 @@ test("formats quiet cohesion footer status", () => {
   );
   assert.equal(
     formatCohesionStatus({
-      missingTools: ["subagent", "workflow"],
+      missingTools: ["todo", "mcp"],
       configProblems: ["Fabric agents must be enabled"],
       activeWorkflowRuns: 0,
     }),
-    "cohesion !tools:subagent,workflow cfg:1",
+    "cohesion !tools:todo,mcp cfg:1",
   );
   assert.equal(
     formatCohesionStatus({

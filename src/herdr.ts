@@ -77,7 +77,7 @@ export async function inspectHerdrDependency(options: {
       status: "missing-binary",
       integrationPath,
       integrationPresent,
-      message: `Herdr CLI is required (Fabric agent transport defaults to herdr). Install from ${HERDR_INSTALL_URL}, then re-run /cohesion setup.`,
+      message: `Herdr CLI not found. Optional: install from ${HERDR_INSTALL_URL} only if you want pane transport when HERDR_ENV=1.`,
     };
   }
 
@@ -87,7 +87,7 @@ export async function inspectHerdrDependency(options: {
       binaryPath,
       integrationPath,
       integrationPresent: false,
-      message: "Herdr is installed but the Pi integration is missing. Setup will run: herdr integration install pi",
+      message: "Herdr CLI found but Pi integration is missing. Optional setup can run: herdr integration install pi",
     };
   }
 
@@ -96,7 +96,7 @@ export async function inspectHerdrDependency(options: {
     binaryPath,
     integrationPath,
     integrationPresent: true,
-    message: "Herdr CLI and Pi integration are present.",
+    message: "Herdr CLI and Pi integration are present (optional enrichment when HERDR_ENV=1).",
   };
 }
 

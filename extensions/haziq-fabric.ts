@@ -87,9 +87,11 @@ export function fabricStateRootFallback(
 }
 
 export default async function haziqFabric(pi: ExtensionAPI) {
-  // Herdr children: absolute pi + PATH injected on pane launch (no node wrapper).
+  // Absolute pi + PATH for Fabric workers. Herdr same-tab patch only when inside Herdr.
   pinFabricLaunchBinaries();
-  ensureFabricHerdrSameTabTransport();
+  if (process.env.HERDR_ENV === "1") {
+    ensureFabricHerdrSameTabTransport();
+  }
 
   const fallbackRoot = fabricStateRootFallback(process.cwd());
   if (fallbackRoot) process.env.PI_FABRIC_PROJECT_ROOT = fallbackRoot;

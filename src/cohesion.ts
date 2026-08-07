@@ -86,7 +86,10 @@ export function inspectRuntimeConfiguration(
   expect(fabric, ["configVersion"], 3, "Fabric configVersion must be 3");
   expect(fabric, ["fullCodeMode"], true, "Fabric fullCodeMode must be enabled");
   expect(fabric, ["agents", "enabled"], true, "Fabric agents must be enabled");
-  expect(fabric, ["agents", "transport"], "herdr", "Fabric agent transport must be herdr");
+  const transport = nestedValue(fabric, ["agents", "transport"]);
+  if (transport !== "process" && transport !== "herdr") {
+    problems.push("Fabric agent transport must be process (default) or herdr (optional when available)");
+  }
   expect(fabric, ["agents", "extensions"], true, "Fabric agent extensions must be enabled");
   expect(fabric, ["mesh", "enabled"], true, "Fabric mesh must be enabled");
   expect(fabric, ["capture", "enabled"], true, "Fabric capture must be enabled");
