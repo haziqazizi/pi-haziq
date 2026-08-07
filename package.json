@@ -16,6 +16,7 @@
   "pi": {
     "extensions": [
       "./node_modules/pi-multi-pass/extensions",
+      "./node_modules/pi-tool-repair/tool-repair.ts",
       "./extensions/haziq-loop.ts",
       "./extensions/haziq-meridian-refresh.ts",
       "./node_modules/@juicesharp/rpiv-todo/index.ts",
@@ -49,6 +50,7 @@
     "pi-multi-pass": "1.3.0",
     "pi-openai-service-tier": "0.1.4",
     "pi-subagents": "0.40.0",
+    "pi-tool-repair": "0.1.10",
     "pi-web-access": "0.15.0"
   },
   "bundledDependencies": [
@@ -62,7 +64,8 @@
     "pi-openai-service-tier",
     "@haziqazizi/designing-dynamic-workflows",
     "pi-fabric",
-    "pi-subagents"
+    "pi-subagents",
+    "pi-tool-repair"
   ],
   "peerDependencies": {
     "@earendil-works/pi-agent-core": "*",
@@ -111,6 +114,7 @@
     "pi-openai-service-tier",
     "@haziqazizi/designing-dynamic-workflows",
     "pi-fabric",
-    "pi-subagents"
+    "pi-subagents",
+    "pi-tool-repair"
   ]
 }

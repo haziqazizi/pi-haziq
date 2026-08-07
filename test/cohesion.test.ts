@@ -10,6 +10,7 @@ import {
   execResultSucceeded,
   extractWorkflowDelivery,
   extractWorkflowRunId,
+  formatCohesionStatus,
   inspectRuntimeConfiguration,
   inspectTools,
   normalizeWorkflowStatus,
@@ -221,3 +222,31 @@ test("tracks workflow state and provides proof-aware instructions", () => {
   assert.match(workflowInstruction(snapshot.workflows.wf_one, "completed"), /Verify/);
   assert.match(workflowInstruction(snapshot.workflows.wf_one, "failed"), /Do not complete/);
 });
+
+test("formats quiet cohesion footer status", () => {
+  assert.equal(
+    formatCohesionStatus({ missingTools: [], configProblems: [], activeWorkflowRuns: 0 }),
+    undefined,
+  );
+  assert.equal(
+    formatCohesionStatus({ missingTools: [], configProblems: [], activeWorkflowRuns: 2 }),
+    "cohesion · wf 2",
+  );
+  assert.equal(
+    formatCohesionStatus({
+      missingTools: ["subagent", "workflow"],
+      configProblems: ["Fabric agents must be disabled"],
+      activeWorkflowRuns: 0,
+    }),
+    "cohesion !tools:subagent,workflow cfg:1",
+  );
+  assert.equal(
+    formatCohesionStatus({
+      missingTools: ["a", "b", "c", "d"],
+      configProblems: [],
+      activeWorkflowRuns: 1,
+    }),
+    "cohesion !tools:a,b,c+1",
+  );
+});
+

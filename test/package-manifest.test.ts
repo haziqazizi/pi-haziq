@@ -32,6 +32,9 @@ test("package exposes Dynamic doctrine, Fabric authoring, and pi-subagents skill
   );
   assert.equal(pkg.dependencies["pi-fabric"], "0.28.6");
   assert.equal(pkg.dependencies["pi-subagents"], "0.40.0");
+  assert.equal(pkg.dependencies["pi-tool-repair"], "0.1.10");
+  assert.ok(pkg.pi.extensions.includes("./node_modules/pi-tool-repair/tool-repair.ts"));
+  assert.ok(pkg.bundledDependencies.includes("pi-tool-repair"));
   assert.equal(pkg.dependencies["@quintinshaw/pi-dynamic-workflows"], "https://github.com/haziqazizi/pi-dynamic-workflows/archive/d76cdb5da3cb0ad87cfabdc1aa39212047148b45.tar.gz");
   assert.equal(pkg.engines.node, ">=24");
   assert.ok(pkg.bundledDependencies.includes("@haziqazizi/designing-dynamic-workflows"));

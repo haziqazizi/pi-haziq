@@ -189,6 +189,28 @@ export function inspectTools(toolNames: Iterable<string>): ToolHealth {
   };
 }
 
+export function formatCohesionStatus(input: {
+  missingTools: readonly string[];
+  configProblems: readonly string[];
+  activeWorkflowRuns: number;
+}): string | undefined {
+  const missingTools = [...input.missingTools];
+  const configProblems = [...input.configProblems];
+  const parts: string[] = [];
+
+  if (missingTools.length > 0) {
+    const shown = missingTools.slice(0, 3).join(",");
+    const extra = missingTools.length > 3 ? `+${missingTools.length - 3}` : "";
+    parts.push(`tools:${shown}${extra}`);
+  }
+  if (configProblems.length > 0) {
+    parts.push(`cfg:${configProblems.length}`);
+  }
+  if (parts.length > 0) return `cohesion !${parts.join(" ")}`;
+  if (input.activeWorkflowRuns > 0) return `cohesion · wf ${input.activeWorkflowRuns}`;
+  return undefined;
+}
+
 export function textFromToolContent(content: unknown): string {
   if (!Array.isArray(content)) return "";
   return content

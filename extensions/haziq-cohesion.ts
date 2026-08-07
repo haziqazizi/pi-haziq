@@ -12,6 +12,7 @@ import {
   execResultSucceeded,
   extractWorkflowDelivery,
   extractWorkflowRunId,
+  formatCohesionStatus,
   inspectRuntimeConfiguration,
   inspectTools,
   makeEvent,
@@ -220,17 +221,17 @@ export default function haziqCohesion(pi: ExtensionAPI) {
     ]);
   }
 
-  function statusText(): string {
-    const activeRuns = runningWorkflowIds(snapshot).length;
-    if (toolHealth.status === "degraded" || runtimeConfigHealth.status === "degraded") {
-      return `cohesion !${toolHealth.missing.length + runtimeConfigHealth.problems.length}`;
-    }
-    if (activeRuns > 0) return `cohesion · wf ${activeRuns}`;
-    return "cohesion ✓";
+  function statusText(): string | undefined {
+    return formatCohesionStatus({
+      missingTools: toolHealth.missing,
+      configProblems: runtimeConfigHealth.problems,
+      activeWorkflowRuns: runningWorkflowIds(snapshot).length,
+    });
   }
 
   function updateStatus(ctx = activeContext) {
     if (!ctx?.hasUI) return;
+    // Quiet when healthy: permanent "cohesion ✓" only adds footer noise.
     ctx.ui.setStatus("haziq-cohesion", statusText());
   }
 
