@@ -24,7 +24,6 @@
       "./node_modules/pi-image-preview/index.ts",
       "./extensions/haziq-mcp.ts",
       "./node_modules/@lll9p/pi-better-compaction/index.ts",
-      "./node_modules/pi-subagents/index.ts",
       "./node_modules/@quintinshaw/pi-dynamic-workflows/extensions/workflow.ts",
       "./extensions/haziq-fabric.ts",
       "./extensions/haziq-cohesion.ts",
@@ -33,8 +32,7 @@
     ],
     "skills": [
       "./node_modules/@haziqazizi/designing-dynamic-workflows",
-      "./node_modules/pi-fabric/skills/fabric-exec",
-      "./node_modules/pi-subagents/skills"
+      "./node_modules/pi-fabric/skills/fabric-exec"
     ]
   },
   "dependencies": {
@@ -49,7 +47,6 @@
     "pi-mcp-adapter": "2.14.0",
     "pi-multi-pass": "1.3.0",
     "pi-openai-service-tier": "0.1.4",
-    "pi-subagents": "0.40.0",
     "pi-tool-repair": "0.1.10",
     "pi-web-access": "0.15.0"
   },
@@ -64,7 +61,6 @@
     "pi-openai-service-tier",
     "@haziqazizi/designing-dynamic-workflows",
     "pi-fabric",
-    "pi-subagents",
     "pi-tool-repair"
   ],
   "peerDependencies": {
@@ -114,7 +110,6 @@
     "pi-openai-service-tier",
     "@haziqazizi/designing-dynamic-workflows",
     "pi-fabric",
-    "pi-subagents",
     "pi-tool-repair"
   ]
 }

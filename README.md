@@ -10,7 +10,7 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 - Use native `/responses/compact` for Responses-family sessions.
 - Delegate Anthropic-style text compaction to `tokenmaxxing/gpt-5.6-sol`.
 - Refresh Meridian's live model catalog while preserving conservative local capabilities when the endpoint lists IDs only.
-- Route casual named-role subagents through `pi-subagents` and fleet orchestration through Dynamic Workflows.
+- Route casual child agents through Fabric `agents.*` and fleet orchestration through Dynamic Workflows.
 - Correlate todo tasks, named subagents, dynamic workflows, loops, MCP calls, compaction, and artifacts through versioned Pi events.
 - Enrich Herdr panes when `HERDR_ENV=1` without bundling or replacing Herdr's managed Pi integration.
 - Fail open with visible diagnostics when an optional integration is unavailable.
@@ -29,7 +29,6 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 | `pi-image-preview` | 0.1.5 | Inline image rendering |
 | `pi-mcp-adapter` | 2.14.0 | MCP gateway and server tools |
 | `@lll9p/pi-better-compaction` | 0.2.1 | Native Responses compact plus delegated fallback |
-| `pi-subagents` | 0.40.0 | Casual named-role delegation (`subagent` / `subagent_wait`); tools captured by Fabric; parent skill advertised |
 | `@quintinshaw/pi-dynamic-workflows` | `d76cdb5d` (`3.4.1`) | Fleet orchestration runtime; tools captured by Fabric, runtime skills hidden |
 | `@haziqazizi/designing-dynamic-workflows` | `c0320dff` | Single visible Dynamic doctrine skill with pinned runtime adapters |
 | `pi-fabric` | 0.28.6 | Upstream deterministic host-tool runtime; agents and mesh disabled; only `fabric-exec` advertised |
@@ -38,7 +37,7 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 
 Fabric's separate worker process intentionally carries its reviewed `@earendil-works/pi-ai@0.82.1` runtime dependency; upstream's package-manifest test rejects moving it to a host peer because the standalone worker imports it directly. Production smoke pins that sole core-runtime exception and rejects any expansion.
 
-`extensions/haziq-cohesion.ts` observes their public Pi surfaces and emits normalized `haziq:*` lifecycle events. It does not reimplement their algorithms. Casual one-or-few named roles use `pi-subagents`; large fan-out, resume, worktree isolation, and multi-phase verify loops use Dynamic Workflows. The package contract in `APPEND_SYSTEM.md` routes between those surfaces. Quintin's `workflow-authoring` and `workflow-patterns` files remain bundled as runtime-owned references but are not separately advertised to the model; `designing-dynamic-workflows` loads the relevant one only when needed. Fabric's advanced skills are likewise not registered.
+`extensions/haziq-cohesion.ts` observes their public Pi surfaces and emits normalized `haziq:*` lifecycle events. It does not reimplement their algorithms. Casual one-or-few children use Fabric agents inside `fabric_exec`; large fan-out, resume, worktree isolation, and multi-phase verify loops use Dynamic Workflows. The package contract in `APPEND_SYSTEM.md` routes between those surfaces. Quintin's `workflow-authoring` and `workflow-patterns` files remain bundled as runtime-owned references but are not separately advertised to the model; `designing-dynamic-workflows` loads the relevant one only when needed. Fabric's advanced skills are likewise not registered.
 
 This package requires Node.js 24 or newer because Fabric's sandbox runtime does.
 
@@ -50,8 +49,8 @@ Compatibility wrappers preserve upstream behavior while closing integration seam
 - `extensions/haziq-mcp.ts` delays MCP configuration until `session_start` and excludes project MCP sources unless Pi marks the project trusted, preventing untrusted eager stdio execution.
 - `extensions/haziq-service-tier.ts` prevents untrusted project configuration from changing request tiers or allow-lists; trusted projects retain normal project-over-global behavior. Unsupported-model tier warnings stay out of the footer (details remain in `/openai-tier status` and notifies).
 - `pi-tool-repair` repairs common open-model tool argument mistakes before execution (null optionals, stringified arrays, field aliases, root bare strings, Kimi anchor bleed). Grammar-leak recovery stays opt-in via its own config.
+- Fabric agents are enabled for casual child work via `agents.*` inside `fabric_exec`. Dynamic Workflows remain the fleet surface. `pi-subagents` is not packaged.
 - Footer status stays quiet when healthy: cohesion only publishes when degraded or a workflow is active. Optional full footer packages such as `pi-footer` remain user-installed; this package does not call `setFooter`.
-- `/cohesion setup` turns off the pi-subagents intercom bridge by default and strips `intercom` / `contact_supervisor` from builtin agent tool allowlists. Pi's child `--tools` allowlist drops those names unless a child runtime actually registers them; Fabric-oriented recon should not require supervisor chat. Re-enable the bridge in `~/.pi/agent/extensions/subagent/config.json` only when you need live parent/child coordination.
 
 ## Development
 

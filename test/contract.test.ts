@@ -18,27 +18,22 @@ test("the extension composes the package contract when project or CLI append tex
   assert.equal(appendPiHaziqContract(composed, policy), composed, "contract must not duplicate across turns or reloads");
 });
 
-test("APPEND_SYSTEM routes casual pi-subagents vs Dynamic fleets and freezes efficient planning", async () => {
+test("APPEND_SYSTEM routes Fabric agents vs Dynamic fleets and freezes efficient planning", async () => {
   const policy = await readFile(join(root, "APPEND_SYSTEM.md"), "utf8");
   assert.match(policy, /## Subagent package routing/);
-  assert.match(policy, /Use `pi-subagents` for casual delegation/);
+  assert.match(policy, /Use Fabric agents for casual delegation/);
   assert.match(policy, /Use Dynamic Workflows for fleet orchestration/);
-  assert.match(policy, /extensions\.subagent/);
-  assert.match(policy, /extensions\.subagent_wait/);
+  assert.match(policy, /agents\.run/);
+  assert.match(policy, /agents\.spawn/);
   assert.match(policy, /extensions\.workflow/);
   assert.match(policy, /extensions\.workflow_control/);
-  assert.match(policy, /Do not invent a Dynamic workflow script for these jobs/);
-  assert.match(policy, /Do not run both for the same work/);
-  assert.match(policy, /never use Fabric agents/i);
-  const guidance = policy
-    .match(/When a non-trivial build outcome is clear,[\s\S]+?(?=\n\n## Authoring and publication)/)?.[0]
-    .trim();
-  const expected = [
-    "When a non-trivial build outcome is clear, first run a bounded planning pass to identify the most efficient safe path, explicitly considering casual `pi-subagents` delegation, Dynamic Workflows for fleets, recursive decomposition only for context overflow, parallel subagents, critical-path dependencies, coordination cost, and proof gates.",
-    "Sequence implementation risk-first through contracts and a thin end-to-end slice, parallelize only isolated work, integrate and verify continuously, and prefer the plan that minimizes expected wall-clock time, compute, coordination, and rework—even when that plan is one agent working directly.",
-  ].join(" ");
-  assert.equal(guidance, expected, "efficient build-path guidance must remain exact and complete");
-  assert.equal(guidance.match(/[.!?](?: |$)/g)?.length, 2, "guidance must remain exactly two sentences");
+  assert.match(policy, /Do \*\*not\*\* install or call Nico Bailon/);
+  assert.match(policy, /If the Dynamic capability is unavailable for a fleet job, stop/);
+  assert.match(
+    policy,
+    /explicitly considering Fabric agents for casual fanout, Dynamic Workflows for fleets, recursive decomposition only for context overflow, critical-path dependencies, coordination cost, and proof gates\./,
+  );
+  assert.match(policy, /prefer the plan that minimizes expected wall-clock time, compute, coordination, and rework/);
 });
 
 test("APPEND_SYSTEM freezes the approved update, reload, setup, publication, and secret boundaries", async () => {
@@ -65,8 +60,8 @@ test("APPEND_SYSTEM names the captured tool refs it requires, not bare tool name
   for (const ref of [
     "extensions.todo({ action: 'create', subject, activeForm })",
     "extensions.todo({ action: 'update', id, status })",
-    "extensions.subagent",
-    "extensions.subagent_wait",
+    "agents.run",
+    "agents.spawn",
     "extensions.workflow",
     "extensions.workflow_control",
     "extensions.web_search",

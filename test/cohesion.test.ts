@@ -89,11 +89,11 @@ test("reports missing expected tools without throwing", () => {
   assert.deepEqual(complete.missing, []);
 });
 
-test("requires the approved dual-subagent runtime configuration", () => {
+test("requires Fabric agents on, mesh off, and Dynamic workflow capture", () => {
   const healthy = inspectRuntimeConfiguration(
     {
       configVersion: 1, fullCodeMode: true,
-      agents: { enabled: false }, mesh: { enabled: false },
+      agents: { enabled: true }, mesh: { enabled: false },
       capture: {
         enabled: true,
         hideFromModel: true,
@@ -101,8 +101,6 @@ test("requires the approved dual-subagent runtime configuration", () => {
         risks: {
           workflow: "agent",
           workflow_control: "execute",
-          subagent: "agent",
-          subagent_wait: "execute",
         },
       },
     },
@@ -110,15 +108,15 @@ test("requires the approved dual-subagent runtime configuration", () => {
   );
   assert.deepEqual(healthy, { status: "healthy", problems: [] });
   const drift = inspectRuntimeConfiguration(
-    { configVersion: 1, fullCodeMode: true, agents: { enabled: true }, mesh: { enabled: true }, capture: { enabled: true, hideFromModel: false, keepVisible: ["fabric_exec", "workflow"], risks: {} } },
+    { configVersion: 1, fullCodeMode: true, agents: { enabled: false }, mesh: { enabled: true }, capture: { enabled: true, hideFromModel: false, keepVisible: ["fabric_exec", "workflow"], risks: {} } },
     { keywordTriggerEnabled: true },
   );
   assert.equal(drift.status, "degraded");
   assert.ok(drift.problems.some((problem) => /agents/.test(problem)));
   assert.ok(drift.problems.some((problem) => /keyword/.test(problem)));
   assert.ok(drift.problems.some((problem) => /Only fabric_exec/.test(problem)));
-  assert.ok(drift.problems.some((problem) => /Subagent launch risk/.test(problem)));
-  assert.ok(drift.problems.some((problem) => /Subagent wait risk/.test(problem)));
+  assert.ok(drift.problems.some((problem) => /Fabric agents must be enabled/.test(problem)));
+  assert.ok(drift.problems.some((problem) => /mesh/i.test(problem)));
 });
 
 test("extracts workflow run IDs from typed details and fallback text", () => {
@@ -235,7 +233,7 @@ test("formats quiet cohesion footer status", () => {
   assert.equal(
     formatCohesionStatus({
       missingTools: ["subagent", "workflow"],
-      configProblems: ["Fabric agents must be disabled"],
+      configProblems: ["Fabric agents must be enabled"],
       activeWorkflowRuns: 0,
     }),
     "cohesion !tools:subagent,workflow cfg:1",
