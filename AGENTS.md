@@ -13,3 +13,4 @@
 - `/cohesion setup` may touch only the documented non-secret settings/config targets and the global `APPEND_SYSTEM.md` link. It must show a key-only preview, confirm, take an exclusive setup lock, reject stale plans, stage atomic per-file replacements, back up updates, preserve the chosen default model and package list, and remain idempotent.
 - Never edit Pi's managed package clone. Authorized durable changes must be proven and published through a PR before being called complete.
 - Prove package loading, appended-prompt loading, setup idempotence, reload behavior, and cross-extension seams before merging.
+- Prefer wholesale reuse of pinned packages. Do not patch files under `node_modules`. Compose with public config, environment variables, and Pi hooks only.

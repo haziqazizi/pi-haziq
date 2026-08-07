@@ -144,7 +144,7 @@ export function resolveNodeBinary(lookup: BinaryLookup = {}): string {
   return "node";
 }
 
-/** Curated PATH for Herdr children: parent PATH + node dir + common user bins. */
+/** Curated PATH for Fabric child workers: parent PATH + node dir + common user bins. */
 export function buildFabricChildPath(lookup: BinaryLookup & { nodeBinary?: string } = {}): string {
   const env = lookup.env ?? process.env;
   const home = lookup.home ?? homedir();
@@ -170,8 +170,8 @@ export function buildFabricChildPath(lookup: BinaryLookup & { nodeBinary?: strin
 }
 
 /**
- * Pin absolute pi binary and a child PATH string for Herdr --env injection.
- * Does not install a node launcher or patch Fabric process-utils.
+ * Pin absolute pi binary and PATH for Fabric workers via environment only.
+ * Does not install launchers or patch Fabric sources under node_modules.
  */
 export function pinFabricLaunchBinaries(lookup: BinaryLookup = {}): {
   piBinary: string;

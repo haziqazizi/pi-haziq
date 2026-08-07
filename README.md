@@ -136,7 +136,7 @@ They intentionally contain no credentials. Applying them through `/cohesion setu
 
 ## Herdr
 
-Fabric agent transport defaults to `process` (detached workers). Herdr is optional: only when `HERDR_ENV=1` and transport is set to `herdr` do children open in panes. `/cohesion setup` may run `herdr integration install pi` if the CLI is already present and the integration file is missing. Herdr owns `~/.pi/agent/extensions/herdr-agent-state.ts`; this package never vendors or edits that file. On load, `haziq-fabric` pins absolute `PI_FABRIC_PI_BINARY` (preferring `cli.js`) and a child `PATH`. When inside Herdr, it may open Fabric children as same-tab sibling splits.
+Fabric agent transport defaults to `process` (detached workers). Herdr is optional: only when `HERDR_ENV=1` and transport is set to `herdr` do children open in panes. `/cohesion setup` may run `herdr integration install pi` if the CLI is already present and the integration file is missing. Herdr owns `~/.pi/agent/extensions/herdr-agent-state.ts`; this package never vendors or edits that file. On load, `haziq-fabric` sets env only: absolute `PI_FABRIC_PI_BINARY` (preferring `cli.js`) and a usable `PATH`. It does not patch `node_modules` or rewrite upstream Fabric transports. Optional Herdr transport uses stock upstream layout behavior.
 
 When running in Herdr, cohesion reports scoped metadata tokens for the active model, API, thinking level, todo, workflow, and compaction strategy. Background notifications are opt-in:
 
