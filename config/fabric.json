@@ -31,10 +31,6 @@
     "hideFromModel": true,
     "keepVisible": [
       "fabric_exec"
-    ],
-    "risks": {
-      "workflow": "agent",
-      "workflow_control": "execute"
-    }
+    ]
   }
 }

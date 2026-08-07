@@ -79,9 +79,9 @@ test("derives native compaction and service tier for a supported Responses model
 });
 
 test("reports missing expected tools without throwing", () => {
-  const health = inspectTools(["todo", "workflow", "mcp"]);
+  const health = inspectTools(["todo", "mcp"]);
   assert.equal(health.status, "degraded");
-  assert.deepEqual(health.present, ["todo", "mcp", "workflow"]);
+  assert.deepEqual(health.present, ["todo", "mcp"]);
   assert.ok(health.missing.includes("start_loop"));
 
   const complete = inspectTools(EXPECTED_TOOLS);
@@ -89,7 +89,7 @@ test("reports missing expected tools without throwing", () => {
   assert.deepEqual(complete.missing, []);
 });
 
-test("requires Fabric agents on, mesh off, and Dynamic workflow capture", () => {
+test("requires Fabric agents on, mesh off, and capture policy", () => {
   const healthy = inspectRuntimeConfiguration(
     {
       configVersion: 3, fullCodeMode: true,
@@ -98,25 +98,17 @@ test("requires Fabric agents on, mesh off, and Dynamic workflow capture", () => 
         enabled: true,
         hideFromModel: true,
         keepVisible: ["fabric_exec"],
-        risks: {
-          workflow: "agent",
-          workflow_control: "execute",
-        },
       },
     },
-    { keywordTriggerEnabled: false },
   );
   assert.deepEqual(healthy, { status: "healthy", problems: [] });
   const drift = inspectRuntimeConfiguration(
-    { configVersion: 3, fullCodeMode: true, agents: { enabled: false }, mesh: { enabled: true }, capture: { enabled: true, hideFromModel: false, keepVisible: ["fabric_exec", "workflow"], risks: {} } },
-    { keywordTriggerEnabled: true },
+    { configVersion: 3, fullCodeMode: true, agents: { enabled: false }, mesh: { enabled: true }, capture: { enabled: true, hideFromModel: false, keepVisible: ["fabric_exec", "todo"] } },
   );
   assert.equal(drift.status, "degraded");
-  assert.ok(drift.problems.some((problem) => /agents/.test(problem)));
-  assert.ok(drift.problems.some((problem) => /keyword/.test(problem)));
-  assert.ok(drift.problems.some((problem) => /Only fabric_exec/.test(problem)));
   assert.ok(drift.problems.some((problem) => /Fabric agents must be enabled/.test(problem)));
   assert.ok(drift.problems.some((problem) => /mesh/i.test(problem)));
+  assert.ok(drift.problems.some((problem) => /Only fabric_exec/.test(problem)));
 });
 
 test("extracts workflow run IDs from typed details and fallback text", () => {

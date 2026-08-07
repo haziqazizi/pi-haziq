@@ -18,22 +18,16 @@ test("the extension composes the package contract when project or CLI append tex
   assert.equal(appendPiHaziqContract(composed, policy), composed, "contract must not duplicate across turns or reloads");
 });
 
-test("APPEND_SYSTEM routes Fabric agents vs Dynamic fleets and freezes efficient planning", async () => {
+test("APPEND_SYSTEM routes Fabric skills via fabric-guide and keeps mesh off", async () => {
   const policy = await readFile(join(root, "APPEND_SYSTEM.md"), "utf8");
-  assert.match(policy, /## Subagent package routing/);
-  assert.match(policy, /Use Fabric agents for casual delegation/);
-  assert.match(policy, /Use Dynamic Workflows for fleet orchestration/);
+  assert.match(policy, /## Multi-agent and Fabric skill routing/);
+  assert.match(policy, /\/skill:fabric-guide/);
+  assert.match(policy, /\/skill:fabric-workflow/);
+  assert.match(policy, /\/skill:fabric-supervisor/);
   assert.match(policy, /agents\.run/);
   assert.match(policy, /agents\.spawn/);
-  assert.match(policy, /extensions\.workflow/);
-  assert.match(policy, /extensions\.workflow_control/);
-  assert.match(policy, /Do \*\*not\*\* install or call Nico Bailon/);
-  assert.match(policy, /If the Dynamic capability is unavailable for a fleet job, stop/);
-  assert.match(
-    policy,
-    /explicitly considering Fabric agents for casual fanout, Dynamic Workflows for fleets, recursive decomposition only for context overflow, critical-path dependencies, coordination cost, and proof gates\./,
-  );
-  assert.match(policy, /prefer the plan that minimizes expected wall-clock time, compute, coordination, and rework/);
+  assert.match(policy, /Dynamic Workflows are not packaged/);
+  assert.match(policy, /Mesh stays \*\*off\*\*/);
 });
 
 test("APPEND_SYSTEM freezes the approved update, reload, setup, publication, and secret boundaries", async () => {
@@ -62,9 +56,7 @@ test("APPEND_SYSTEM names the captured tool refs it requires, not bare tool name
     "extensions.todo({ action: 'update', id, status })",
     "agents.run",
     "agents.spawn",
-    "extensions.workflow",
-    "extensions.workflow_control",
-    "extensions.web_search",
+            "extensions.web_search",
     "extensions.fetch_content",
     "extensions.get_search_content",
     "extensions.agent_browser",

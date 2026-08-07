@@ -119,3 +119,7 @@ The affected target set is the seven mappings in step 5: global append policy, s
 ## Monty loop and long-run helpers
 
 Remove standalone `npm:@koltmcbride/pi-loop` if present. This package now ships `@monotykamary/pi-loop` (verification loop), not the Kolt scheduled loop. Also packaged: `@monotykamary/pi-supervisor`, `pi-reason-harness`, `pi-invisible-continue`, `pi-autoresearch-harness`, and Monty's `pi-queue-steer` pin. Fabric is pinned to `0.40.1`.
+
+## Remove Dynamic Workflows
+
+This package no longer ships `@quintinshaw/pi-dynamic-workflows` or `designing-dynamic-workflows`. Remove any standalone installs. Use Fabric skills (`/skill:fabric-guide`, `fabric-workflow`, agents) instead.

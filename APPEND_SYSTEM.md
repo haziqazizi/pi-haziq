@@ -37,36 +37,49 @@ Then start Pi, run `/cohesion setup`, approve its preview, and run `/reload`. Pr
 
 Herdr is optional. When `HERDR_ENV=1`, verify that the Herdr-managed Pi integration is current through Herdr's supported integration command. Never vendor or edit `~/.pi/agent/extensions/herdr-agent-state.ts` from this package.
 
-## Subagent package routing
+## Multi-agent and Fabric skill routing
 
-This package ships two reviewed multi-agent surfaces. Choose **one surface per job**. Do not run both for the same work. Mesh, handoff, RLM, councils, and swarms stay off unless a later approved contract enables them.
+This package uses **Fabric** as the multi-agent plane. Dynamic Workflows are not packaged.
 
-### Use Fabric agents for casual delegation
+### Router
 
-Use monotykamary Fabric agents when the parent needs one or a few child workers, a short parallel fanout, or a recursive probe inside one `fabric_exec` program.
+When unsure which advanced Fabric path to use, run **`/skill:fabric-guide`**. It only recommends a skill; it does not run it.
 
-Examples: one reviewer pass, a few parallel scouts, a bounded recursive decomposition.
+### Core path
 
-- Load skill `fabric-exec`.
-- Spawn children with `agents.run` / `agents.spawn` / `agents.wait` inside `fabric_exec` (not as separate top-level tools).
-- Prefer small tool allowlists on children (`read`, `grep`, `find`, `ls`, `bash`, and write tools only when the job needs them).
-- Do **not** install or call Nico Bailon `pi-subagents` (`extensions.subagent`) from this package.
+- Normal coding: `fabric_exec` + skill `fabric-exec` as needed.
+- Casual children: `agents.run` / `agents.spawn` / `agents.wait` inside `fabric_exec` (Fabric agents enabled).
+- Mesh stays **off** unless a later approved contract enables it. Prefer `fabric-workflow` / agents over swarm until mesh is on.
 
-### Use Dynamic Workflows for fleet orchestration
+### User-invoked Fabric skills (all enabled)
 
-Use Quintin's `@quintinshaw/pi-dynamic-workflows` when the work needs code-mode orchestration, large fan-out, model-tier routing, journaled resume, worktree isolation, budgets, or multi-phase verify/judge loops.
+| Need | Skill |
+|---|---|
+| Choose a path | `/skill:fabric-guide` |
+| Finite fan-out + verify | `/skill:fabric-workflow` |
+| Same-model role council | `/skill:fabric-council` |
+| Multi-model panel + judge | `/skill:fabric-fusion` |
+| Context too large | `/skill:fabric-rlm` |
+| Evidence-gated file mutation | `/skill:fabric-schema` |
+| Ambient peer advice | `/skill:fabric-advisor` |
+| One measurable goal watcher | `/skill:fabric-supervisor` |
+| Spec compliance until verified | `/skill:fabric-spec` |
+| Advisor vs supervisor setup | `/skill:fabric-ambient` |
+| Durable actor team | `/skill:fabric-swarm` (needs mesh if full swarm) |
 
-Examples: codebase-wide audit, multi-stage research with verification, large parallel file fleet, resumable multi-phase orchestration.
+### Outside Fabric (still packaged)
 
-- Before authoring, load `designing-dynamic-workflows`, then read the hidden installed `pi-dynamic-workflows` authoring or pattern contract it selects.
-- Call the captured tools through `fabric_exec` as `extensions.workflow` and `extensions.workflow_control`.
-- If the Dynamic capability is unavailable for a fleet job, stop instead of inventing a second fleet plane or enabling mesh/swarms.
+- Monty `/loop` / `start_loop` — verify-before-done on the main session.
+- Monty `/supervise` — standalone outcome supervision.
+- `todo` (rpiv-todo) — checklist overlay.
+- Do **not** install Nico Bailon `pi-subagents`.
 
-### Direct non-subagent work
+### Direct work
 
-For direct Pi, MCP, captured-extension, Schema, compaction, or memory work, load `fabric-exec` and use one deterministic Fabric program without spawning children. Existing direct tasks do not require agent or workflow redesign.
+For ordinary Pi/MCP/tools work, use one `fabric_exec` program without children when that is enough.
 
-When a non-trivial build outcome is clear, first run a bounded planning pass to identify the most efficient safe path, explicitly considering Fabric agents for casual fanout, Dynamic Workflows for fleets, recursive decomposition only for context overflow, critical-path dependencies, coordination cost, and proof gates. Sequence implementation risk-first through contracts and a thin end-to-end slice, parallelize only isolated work, integrate and verify continuously, and prefer the plan that minimizes expected wall-clock time, compute, coordination, and rework—even when that plan is one agent working directly.
+When a non-trivial build outcome is clear, first run a bounded planning pass. Consider Fabric agents, Fabric workflow/council/fusion skills, recursive RLM only for context overflow, coordination cost, and proof gates. Prefer the plan that minimizes wall-clock time, compute, coordination, and rework.
+
 
 ## Authoring and publication
 
