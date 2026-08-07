@@ -79,16 +79,11 @@ export default async function haziqFabric(pi: ExtensionAPI) {
 
   let fabricCommand: FabricCommandHandler | undefined;
 
+  // Pass through Fabric resource discovery unchanged so all packaged Fabric
+  // skills (guide router + advanced workflows) remain visible. Capture still
+  // hides non-fabric_exec tools from the model tool list.
   const wrapped = new Proxy(pi, {
     get(target, property, receiver) {
-      if (property === "on") {
-        return (event: string, handler: (...args: unknown[]) => unknown) =>
-          target.on(event as never, (async (...args: unknown[]) => {
-            const result = await handler(...args);
-            if (event !== "resources_discover" || !result || typeof result !== "object") return result;
-            return { ...result, skillPaths: [] };
-          }) as never);
-      }
       if (property === "registerCommand") {
         return (name: string, options: { handler: FabricCommandHandler }) => {
           if (name === "fabric") fabricCommand = options.handler;

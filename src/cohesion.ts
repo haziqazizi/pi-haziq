@@ -5,8 +5,6 @@ export const EXPECTED_TOOLS = [
   "todo",
   "mcp",
   "start_loop",
-  "workflow",
-  "workflow_control",
 ] as const;
 
 export type CohesionHealth = "healthy" | "degraded";
@@ -69,7 +67,7 @@ function nestedValue(value: unknown, path: string[]): unknown {
 
 export function inspectRuntimeConfiguration(
   fabric: unknown,
-  workflow: unknown,
+  _workflow?: unknown,
 ): RuntimeConfigurationHealth {
   const problems: string[] = [];
   const expect = (source: unknown, path: string[], expected: unknown, label: string) => {
@@ -82,9 +80,6 @@ export function inspectRuntimeConfiguration(
   expect(fabric, ["capture", "enabled"], true, "Fabric capture must be enabled");
   expect(fabric, ["capture", "hideFromModel"], true, "Fabric captured tools must be hidden");
   expect(fabric, ["capture", "keepVisible"], ["fabric_exec"], "Only fabric_exec may stay visible");
-  expect(fabric, ["capture", "risks", "workflow"], "agent", "Workflow launch risk must be agent");
-  expect(fabric, ["capture", "risks", "workflow_control"], "execute", "Workflow control risk must be execute");
-  expect(workflow, ["keywordTriggerEnabled"], false, "Dynamic keyword trigger must be disabled");
   return { status: problems.length === 0 ? "healthy" : "degraded", problems };
 }
 

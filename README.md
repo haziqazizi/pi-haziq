@@ -34,15 +34,13 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 | `pi-image-preview` | 0.1.5 | Inline image rendering |
 | `pi-mcp-adapter` | 2.14.0 | MCP gateway and server tools |
 | `@lll9p/pi-better-compaction` | 0.2.1 | Native Responses compact plus delegated fallback |
-| `@quintinshaw/pi-dynamic-workflows` | `d76cdb5d` (`3.4.1`) | Fleet orchestration runtime; tools captured by Fabric, runtime skills hidden |
-| `@haziqazizi/designing-dynamic-workflows` | `c0320dff` | Single visible Dynamic doctrine skill with pinned runtime adapters |
 | `pi-fabric` | 0.40.1 | Upstream deterministic host-tool runtime; agents and mesh disabled; only `fabric-exec` advertised |
 | `pi-web-access` | 0.15.0 | Web search and content fetching for pages, PDFs, GitHub repositories, and videos |
 | `pi-agent-browser-native` | 0.2.72 | Browser automation for interactive pages, JavaScript-heavy pages, and visual checks |
 
 Fabric's separate worker process intentionally carries its reviewed `@earendil-works/pi-ai@0.84.1` runtime dependency; upstream's package-manifest test rejects moving it to a host peer because the standalone worker imports it directly. Production smoke pins that sole core-runtime exception and rejects any expansion.
 
-`extensions/haziq-cohesion.ts` observes their public Pi surfaces and emits normalized `haziq:*` lifecycle events. It does not reimplement their algorithms. Casual one-or-few children use Fabric agents inside `fabric_exec`; large fan-out, resume, worktree isolation, and multi-phase verify loops use Dynamic Workflows. The package contract in `APPEND_SYSTEM.md` routes between those surfaces. Quintin's `workflow-authoring` and `workflow-patterns` files remain bundled as runtime-owned references but are not separately advertised to the model; `designing-dynamic-workflows` loads the relevant one only when needed. Fabric's advanced skills are likewise not registered.
+`extensions/haziq-cohesion.ts` observes their public Pi surfaces and emits normalized `haziq:*` lifecycle events. It does not reimplement their algorithms. Multi-agent work uses Fabric agents and user-invoked Fabric skills (`/skill:fabric-guide` router). Dynamic Workflows are not packaged. The package contract in `APPEND_SYSTEM.md` is authoritative. Quintin's `workflow-authoring` and `workflow-patterns` files remain bundled as runtime-owned references but are not separately advertised to the model; `designing-dynamic-workflows` loads the relevant one only when needed. Fabric's advanced skills are likewise not registered.
 
 This package requires Node.js 24 or newer because Fabric's sandbox runtime does.
 
@@ -53,8 +51,9 @@ Compatibility wrappers preserve upstream behavior while closing integration seam
 - `extensions/haziq-mcp.ts` delays MCP configuration until `session_start` and excludes project MCP sources unless Pi marks the project trusted, preventing untrusted eager stdio execution.
 - `extensions/haziq-service-tier.ts` prevents untrusted project configuration from changing request tiers or allow-lists; trusted projects retain normal project-over-global behavior. Unsupported-model tier warnings stay out of the footer (details remain in `/openai-tier status` and notifies).
 - `pi-tool-repair` repairs common open-model tool argument mistakes before execution (null optionals, stringified arrays, field aliases, root bare strings, Kimi anchor bleed). Grammar-leak recovery stays opt-in via its own config.
-- Fabric agents are enabled for casual child work via `agents.*` inside `fabric_exec`. Dynamic Workflows remain the fleet surface. `pi-subagents` is not packaged.
-- Monty verification loop (`/loop`, `start_loop`), supervisor, reason-harness, invisible-continue, autoresearch, and queue-steer are packaged. Kolt scheduled `pi-loop` is not.
+- Fabric agents are enabled; **all Fabric skills are registered** (including `fabric-guide` router). Mesh stays off by default.
+- Dynamic Workflows are **not** packaged.
+- Monty `/loop`, supervisor, reason-harness, invisible-continue, autoresearch, and queue-steer remain packaged.
 - Footer status stays quiet when healthy: cohesion only publishes when degraded or a workflow is active. Optional full footer packages such as `pi-footer` remain user-installed; this package does not call `setFooter`.
 
 ## Development

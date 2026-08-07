@@ -47,7 +47,7 @@ const temp = await mkdtemp(join(tmpdir(), "pi-haziq-smoke."));
 const home = join(temp, "home");
 const cwd = join(temp, "cwd");
 await Promise.all([mkdir(join(home, ".pi", "agent"), { recursive: true }), mkdir(join(home, ".pi", "workflows"), { recursive: true }), mkdir(cwd)]);
-await writeFile(join(home, ".pi", "agent", "fabric.json"), JSON.stringify({ configVersion: 3, fullCodeMode: true, agents: { enabled: true, runner: "pi", transport: "process", defaultTools: ["read", "bash", "edit", "write", "grep", "find", "ls"] }, mesh: { enabled: false }, capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"], risks: { workflow: "agent", workflow_control: "execute" } } }));
+await writeFile(join(home, ".pi", "agent", "fabric.json"), JSON.stringify({ configVersion: 3, fullCodeMode: true, agents: { enabled: true, runner: "pi", transport: "process", defaultTools: ["read", "bash", "edit", "write", "grep", "find", "ls"] }, mesh: { enabled: false }, capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"] } }));
 await writeFile(join(home, ".pi", "workflows", "settings.json"), JSON.stringify({ keywordTriggerEnabled: false }));
 assert.equal(existsSync(join(root, "APPEND_SYSTEM.md")), true, "package must contain APPEND_SYSTEM.md");
 await symlink(join(root, "APPEND_SYSTEM.md"), join(home, ".pi", "agent", "APPEND_SYSTEM.md"));
@@ -178,16 +178,15 @@ try {
   assert.equal(commands.success, true);
   const names = commands.data.commands.map((command) => command.name);
   assert.equal(names.filter((name) => name === "cohesion").length, 1, "cohesion command must load exactly once");
-  assert.equal(names.includes("workflows"), true, "Dynamic workflow command must be registered");
+  assert.equal(names.includes("workflows"), false, "Dynamic workflow command must not be registered");
   assert.ok(names.includes("todos"));
   assert.ok(names.includes("mcp"));
   assert.ok(names.includes("fabric"));
-  assert.ok(names.includes("skill:designing-dynamic-workflows"));
-  assert.equal(names.includes("skill:workflow-authoring"), false);
-  assert.equal(names.includes("skill:workflow-patterns"), false);
   const fabricSkills = names.filter((name) => name.startsWith("skill:fabric-")).sort();
   assert.ok(fabricSkills.includes("skill:fabric-exec"), "fabric-exec must load (model-invoked)");
-  assert.deepEqual(fabricSkills, ["skill:fabric-exec"], "only fabric-exec may be advertised");
+  assert.ok(fabricSkills.includes("skill:fabric-guide"), "fabric-guide router must load");
+  assert.ok(fabricSkills.includes("skill:fabric-supervisor"));
+  assert.ok(fabricSkills.length >= 12, "all Fabric skills should load, got " + fabricSkills.length);
 
   await new Promise((resolveWait) => setTimeout(resolveWait, 500));
   assert.equal(existsSync(trustedMarker), true, "trusted project MCP config did not initialize");
@@ -199,7 +198,7 @@ try {
     (event) => event.type === "extension_ui_request" && event.method === "notify" && event.message?.startsWith("Haziq cohesion:"),
   );
   assert.match(notice.message, /^Haziq cohesion: healthy/m);
-  assert.match(notice.message, /^Tools: 5\/5 · Fabric-captured$/m);
+  assert.match(notice.message, /^Tools: 3\/3 · Fabric-captured$/m);
   assert.match(notice.message, /^Runtime config: healthy$/m);
   assert.match(notice.message, /^Herdr: not active$/m);
   assert.match(notice.message, /APPEND_SYSTEM\.md$/m);
@@ -223,8 +222,6 @@ try {
     "todo",
     "mcp",
     "start_loop",
-    "workflow",
-    "workflow_control",
   ]) {
     assert.equal(capturedNames.has(name), true, `${name} was not captured by Fabric`);
   }
@@ -260,12 +257,10 @@ try {
   assert.equal(afterReload.success, true);
   const afterNames = afterReload.data.commands.map((command) => command.name);
   assert.equal(afterNames.filter((name) => name === "cohesion").length, 1, "reload must not duplicate cohesion");
-  assert.ok(afterNames.includes("skill:designing-dynamic-workflows"));
   const afterFabricSkills = afterNames.filter((name) => name.startsWith("skill:fabric-")).sort();
-  assert.deepEqual(afterFabricSkills, ["skill:fabric-exec"], "only fabric-exec may survive reload");
-  assert.ok(afterNames.includes("workflows"), "Dynamic workflow command must survive reload");
-  assert.equal(afterNames.includes("skill:workflow-authoring"), false);
-  assert.equal(afterNames.includes("skill:workflow-patterns"), false);
+  assert.ok(afterFabricSkills.includes("skill:fabric-guide"), "fabric-guide must survive reload");
+  assert.ok(afterFabricSkills.length >= 12, "Fabric skills must survive reload");
+  assert.equal(afterNames.includes("workflows"), false);
 
   send({ id: "contract-shadow", type: "prompt", message: "/cohesion contract" });
   const shadowResponse = await waitFor((event) => event.type === "response" && event.id === "contract-shadow");
@@ -298,7 +293,7 @@ try {
     `unexpected stderr: ${stderr}`,
   );
 
-  console.log("package smoke: healthy, Fabric agents + Dynamic workflows, only fabric-exec advertised, 5/5 tools captured by Fabric, appended contract reached provider exactly once beside project policy, setup check read-only, trusted MCP initialized, reload-safe, no duplicates or extension errors");
+  console.log("package smoke: healthy, Fabric agents + full Fabric skills (guide router), 3/3 tools captured by Fabric, appended contract reached provider exactly once beside project policy, setup check read-only, trusted MCP initialized, reload-safe, no duplicates or extension errors");
 } finally {
   child.kill("SIGTERM");
   await new Promise((resolveExit) => {
