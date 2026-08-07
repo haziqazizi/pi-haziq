@@ -10,6 +10,17 @@ export const FABRIC_CAPTURED_TOOLS_EVENT = "haziq:fabric-captured-tools:v1";
 
 type FabricCommandHandler = (args: string, ctx: ExtensionContext) => Promise<void> | void;
 
+/**
+ * Actor/recursive Fabric workers already receive Fabric via `--fabric-extension`
+ * (pi-fabric/dist/index.js). Loading haziq-fabric's piFabric() again registers a
+ * second fabric_exec and crashes the child with a tool conflict.
+ */
+export function shouldHostPiFabric(env: NodeJS.ProcessEnv = process.env, hostedToolNames: string[] = []): boolean {
+  if (env.PI_FABRIC_ACTOR_ID) return false;
+  if (hostedToolNames.includes("fabric_exec")) return false;
+  return true;
+}
+
 export function parseFabricCapturedToolNames(message: string): string[] {
   const names = message
     .split("\n")
@@ -82,6 +93,22 @@ export default async function haziqFabric(pi: ExtensionAPI) {
 
   const fallbackRoot = fabricStateRootFallback(process.cwd());
   if (fallbackRoot) process.env.PI_FABRIC_PROJECT_ROOT = fallbackRoot;
+
+  // Avoid getAllTools() during extension load (can hang/crash smoke RPC boot).
+  // Actor workers set PI_FABRIC_ACTOR_ID; recursive -e pi-fabric is detected on
+  // session_start if needed. Primary guard is env-based.
+  const hostPiFabric = shouldHostPiFabric(process.env, []);
+
+  // Pins/PATH/same-tab still apply to actor workers; do not re-host Fabric there.
+  if (!hostPiFabric) {
+    pi.on("session_start", async () => {
+      pi.events.emit(FABRIC_CAPTURED_TOOLS_EVENT, {
+        names: [],
+        status: "delegated",
+      });
+    });
+    return;
+  }
 
   let fabricCommand: FabricCommandHandler | undefined;
 
