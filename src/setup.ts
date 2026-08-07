@@ -260,6 +260,13 @@ export async function planSetup(paths: SetupPaths): Promise<SetupOperation[]> {
       paths.lockPath,
     ),
     planJson(
+      "pi-subagents intercom bridge",
+      join(configDir, "pi-subagents-bridge.json"),
+      join(paths.ownerAgentDir, "extensions", "subagent", "config.json"),
+      paths.ownerAgentDir,
+      paths.lockPath,
+    ),
+    planJson(
       "Fabric tool-only runtime",
       join(configDir, "fabric.json"),
       join(paths.agentDir, "fabric.json"),

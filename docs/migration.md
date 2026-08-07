@@ -69,6 +69,7 @@ The first command is read-only. The second shows a key-only, value-redacted prev
 - merges `config/settings.fragment.json` without changing the chosen default provider/model or package list;
 - merges the better-compaction, service-tier, and workflow-tier templates where those pinned owners actually read them;
 - disables Fabric agents/mesh, keeps only `fabric_exec` visible, captures Dynamic and `pi-subagents` tools with explicit risks, and disables Dynamic's competing keyword trigger.
+- sets pi-subagents `intercomBridge.mode` to `off` and removes `intercom`/`contact_supervisor` from builtin agent tool allowlists so child launches do not fail Pi's strict unavailable-tool diagnostic when supervisor tools are not in the child registry.
 
 It never touches `auth.json`, `models.json`, provider credentials, MCP authentication, sessions, trust decisions, or caches. If an owned JSON target is malformed, an unexpected configuration symlink is present, or any target changes after preview, setup fails before changing files. Pi agent-directory overrides are honored for Pi-owned files; pinned extensions that hardcode `~/.pi` continue to receive config there.
 

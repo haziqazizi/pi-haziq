@@ -10,5 +10,102 @@
     "enabled": true,
     "reserveTokens": 16384,
     "keepRecentTokens": 20000
+  },
+  "subagents": {
+    "agentOverrides": {
+      "scout": {
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "bash",
+          "write"
+        ]
+      },
+      "planner": {
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "bash",
+          "write"
+        ]
+      },
+      "researcher": {
+        "tools": [
+          "read",
+          "write",
+          "bash",
+          "web_search",
+          "fetch_content",
+          "get_search_content"
+        ]
+      },
+      "context-builder": {
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "bash",
+          "write"
+        ]
+      },
+      "oracle": {
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "bash",
+          "write"
+        ]
+      },
+      "advisor": {
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "bash",
+          "write"
+        ]
+      },
+      "reviewer": {
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "bash",
+          "write",
+          "edit"
+        ]
+      },
+      "worker": {
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "bash",
+          "edit",
+          "write"
+        ]
+      },
+      "delegate": {
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "bash",
+          "edit",
+          "write"
+        ]
+      }
+    }
   }
 }
