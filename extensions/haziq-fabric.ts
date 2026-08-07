@@ -101,13 +101,9 @@ export default async function haziqFabric(pi: ExtensionAPI) {
 
   // Pins/PATH/same-tab still apply to actor workers; do not re-host Fabric there.
   if (!hostPiFabric) {
-    pi.on("session_start", async (_event, ctx) => {
-      let names: string[] = [];
-      try {
-        if (typeof ctx?.hasTool === "function" && ctx.hasTool("fabric_exec")) names = ["fabric_exec"];
-      } catch { /* ignore */ }
+    pi.on("session_start", async () => {
       pi.events.emit(FABRIC_CAPTURED_TOOLS_EVENT, {
-        names,
+        names: [],
         status: "delegated",
       });
     });
