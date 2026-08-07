@@ -5,6 +5,7 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import piFabric from "pi-fabric";
 import { pinFabricLaunchBinaries } from "../src/fabric-binaries.ts";
 import { ensureFabricRuntimePrefersNodeOverride } from "../src/fabric-runtime-patch.ts";
+import { ensureFabricHerdrSameTabTransport } from "../src/herdr-same-tab.ts";
 
 export const FABRIC_CAPTURED_TOOLS_EVENT = "haziq:fabric-captured-tools:v1";
 
@@ -81,6 +82,7 @@ export default async function haziqFabric(pi: ExtensionAPI) {
   // and prefer PI_FABRIC_NODE_BINARY (PATH launcher) over process.execPath.
   pinFabricLaunchBinaries();
   ensureFabricRuntimePrefersNodeOverride();
+  ensureFabricHerdrSameTabTransport();
 
   const fallbackRoot = fabricStateRootFallback(process.cwd());
   if (fallbackRoot) process.env.PI_FABRIC_PROJECT_ROOT = fallbackRoot;
