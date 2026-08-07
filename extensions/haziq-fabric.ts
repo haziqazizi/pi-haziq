@@ -4,7 +4,6 @@ import { dirname, join, resolve } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import piFabric from "pi-fabric";
 import { pinFabricLaunchBinaries } from "../src/fabric-binaries.ts";
-import { ensureFabricHerdrSameTabTransport } from "../src/herdr-same-tab.ts";
 
 export const FABRIC_CAPTURED_TOOLS_EVENT = "haziq:fabric-captured-tools:v1";
 
@@ -87,11 +86,8 @@ export function fabricStateRootFallback(
 }
 
 export default async function haziqFabric(pi: ExtensionAPI) {
-  // Absolute pi + PATH for Fabric workers. Herdr same-tab patch only when inside Herdr.
+  // Env-only composition: absolute pi + PATH for Fabric workers (no node_modules patches).
   pinFabricLaunchBinaries();
-  if (process.env.HERDR_ENV === "1") {
-    ensureFabricHerdrSameTabTransport();
-  }
 
   const fallbackRoot = fabricStateRootFallback(process.cwd());
   if (fallbackRoot) process.env.PI_FABRIC_PROJECT_ROOT = fallbackRoot;
@@ -101,7 +97,7 @@ export default async function haziqFabric(pi: ExtensionAPI) {
   // session_start if needed. Primary guard is env-based.
   const hostPiFabric = shouldHostPiFabric(process.env, []);
 
-  // Pins/PATH/same-tab still apply to actor workers; do not re-host Fabric there.
+  // Binary PATH pins still apply to actor workers; do not re-host Fabric there.
   if (!hostPiFabric) {
     pi.on("session_start", async () => {
       pi.events.emit(FABRIC_CAPTURED_TOOLS_EVENT, {

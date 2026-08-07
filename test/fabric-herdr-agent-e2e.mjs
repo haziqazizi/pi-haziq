@@ -6,9 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const { pinFabricLaunchBinaries } = await import(pathToFileURL(join(root, "src/fabric-binaries.ts")).href);
-const { ensureFabricHerdrSameTabTransport } = await import(pathToFileURL(join(root, "src/herdr-same-tab.ts")).href);
 const pinned = pinFabricLaunchBinaries();
-console.log("same-tab-transport", ensureFabricHerdrSameTabTransport(join(root, "src/herdr-same-tab.ts")));
 
 if (process.env.HERDR_ENV !== "1" || !process.env.HERDR_SOCKET_PATH || !process.env.HERDR_WORKSPACE_ID) {
   console.log("skip: not inside Herdr");
