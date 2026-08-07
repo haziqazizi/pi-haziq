@@ -187,6 +187,8 @@ try {
   assert.ok(fabricSkills.includes("skill:fabric-guide"), "fabric-guide router must load");
   assert.ok(fabricSkills.includes("skill:fabric-supervisor"));
   assert.ok(fabricSkills.length >= 12, "all Fabric skills should load, got " + fabricSkills.length);
+  assert.ok(names.includes("skill:herdr-factory"), "herdr-factory skill must load");
+  assert.ok(names.includes("skill:herdr-guide"), "herdr-guide skill must load");
 
   await new Promise((resolveWait) => setTimeout(resolveWait, 500));
   assert.equal(existsSync(trustedMarker), true, "trusted project MCP config did not initialize");

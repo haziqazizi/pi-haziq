@@ -13,7 +13,7 @@ const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
 };
 
 
-test("package exposes all Fabric skills plus reason-harness", () => {
+test("package exposes Fabric skills, reason-harness, and herdr-factory", () => {
   assert.deepEqual(pkg.pi.skills, [
       "./node_modules/pi-fabric/skills/fabric-exec",
       "./node_modules/pi-fabric/skills/fabric-guide",
@@ -27,9 +27,16 @@ test("package exposes all Fabric skills plus reason-harness", () => {
       "./node_modules/pi-fabric/skills/fabric-spec",
       "./node_modules/pi-fabric/skills/fabric-ambient",
       "./node_modules/pi-fabric/skills/fabric-swarm",
-      "./node_modules/pi-reason-harness/skills/reason-harness"
+      "./node_modules/pi-reason-harness/skills/reason-harness",
+      "./node_modules/@haziqazizi/herdr-factory/skills/herdr-guide",
+      "./node_modules/@haziqazizi/herdr-factory/skills/herdr-factory",
   ]);
   assert.ok(pkg.pi.skills.includes("./node_modules/pi-fabric/skills/fabric-guide"));
+  assert.ok(
+    pkg.pi.skills.some((s: string) => s.includes("herdr-factory")),
+    "herdr-factory skills must be composed",
+  );
+  assert.ok(pkg.dependencies["@haziqazizi/herdr-factory"], "herdr-factory dependency must be pinned");
   assert.ok(pkg.pi.skills.includes("./node_modules/pi-fabric/skills/fabric-supervisor"));
   assert.ok(pkg.pi.extensions.includes("./extensions/haziq-fabric.ts"));
   assert.equal(pkg.pi.extensions.includes("./node_modules/pi-fabric/dist/index.js"), false);
@@ -73,6 +80,8 @@ test("hidden runtime contracts remain installed for the visible adapter", () => 
     "node_modules/pi-fabric/skills/fabric-exec/SKILL.md",
     "node_modules/@monotykamary/pi-loop/src/index.ts",
     "node_modules/pi-reason-harness/skills/reason-harness/SKILL.md",
+    "node_modules/@haziqazizi/herdr-factory/skills/herdr-factory/SKILL.md",
+    "node_modules/@haziqazizi/herdr-factory/skills/herdr-guide/SKILL.md",
   ]) {
     assert.equal(existsSync(join(root, path)), true, `missing bundled contract: ${path}`);
   }

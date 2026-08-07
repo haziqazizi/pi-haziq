@@ -138,6 +138,16 @@ They intentionally contain no credentials. Applying them through `/cohesion setu
 
 ## Herdr
 
+## Herdr factory (WIP fleet)
+
+Visible WIP-limited multi-agent skills live in [`haziqazizi/herdr-factory`](https://github.com/haziqazizi/herdr-factory) and are composed into this package:
+
+- `/skill:herdr-guide` — choose Herdr orchestration vs Fabric
+- `/skill:herdr-factory` — tickets to WIP todos to Herdr worker panes
+
+These skills use the `herdr` CLI only for workers (not Fabric agents.run). Optional Monty `/loop` on Main for verify-until-done. Pair with ME `me-plan-work` / `me-define-done` for tickets and contracts.
+
+
 Fabric agent transport defaults to `herdr`, so the `herdr` CLI from [herdr.dev](https://herdr.dev) is a package prerequisite. `/cohesion setup` checks for the binary and runs `herdr integration install pi` when needed. Herdr owns `~/.pi/agent/extensions/herdr-agent-state.ts`; this package never vendors or edits that file. On load, `haziq-fabric` pins absolute `PI_FABRIC_PI_BINARY` (preferring `cli.js`) and a child `PATH`, opens Fabric children as same-tab sibling splits (right/down, no focus steal), and injects that `PATH` on each Herdr pane—no custom `pi-fabric-node` launcher.
 
 When running in Herdr, cohesion reports scoped metadata tokens for the active model, API, thinking level, todo, workflow, and compaction strategy. Background notifications are opt-in:

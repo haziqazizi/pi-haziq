@@ -69,6 +69,7 @@ When unsure which advanced Fabric path to use, run **`/skill:fabric-guide`**. It
 
 ### Outside Fabric (still packaged)
 
+- Herdr visible fleet (WIP factory): `/skill:herdr-guide`, `/skill:herdr-factory` (not Fabric `agents.run`).
 - Monty `/loop` / `start_loop` — verify-before-done on the main session.
 - Monty `/supervise` — standalone outcome supervision.
 - `todo` (rpiv-todo) — checklist overlay.
