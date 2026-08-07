@@ -43,6 +43,7 @@ npm:@juicesharp/rpiv-todo
 npm:pi-openai-service-tier
 npm:pi-image-preview
 npm:pi-mcp-adapter@2.11.0
+- `pi-tool-repair` (now bundled; remove any standalone install)
 npm:@lll9p/pi-better-compaction
 npm:@quintinshaw/pi-dynamic-workflows@3.4.1
 npm:pi-subagents

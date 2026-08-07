@@ -25,6 +25,7 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 | `@koltmcbride/pi-loop` | 0.2.0 | Scheduled, event, and self-paced loops |
 | `@juicesharp/rpiv-todo` | 2.1.0 | Durable task graph and overlay |
 | `pi-openai-service-tier` | 0.1.4 | OpenAI priority service tier |
+| `pi-tool-repair` | 0.1.10 | Validate-then-repair for common LLM tool-call mistakes (Monty Kamary / monotykamary) |
 | `pi-image-preview` | 0.1.5 | Inline image rendering |
 | `pi-mcp-adapter` | 2.14.0 | MCP gateway and server tools |
 | `@lll9p/pi-better-compaction` | 0.2.1 | Native Responses compact plus delegated fallback |
@@ -47,7 +48,9 @@ Compatibility wrappers preserve upstream behavior while closing integration seam
 - `extensions/haziq-loop.ts` releases shared event-bus subscriptions during `/reload`, preventing duplicate loop delivery across extension generations.
 - `extensions/haziq-meridian-refresh.ts` attaches Pi's `refreshModels` hook to a globally configured Meridian provider. ID-only catalogs filter the trusted static models; bounded capability metadata can update limits or add models. Offline, malformed, empty, duplicate, and unreachable catalogs retain the static last-known-good list. Credentials and response bodies are never logged or persisted.
 - `extensions/haziq-mcp.ts` delays MCP configuration until `session_start` and excludes project MCP sources unless Pi marks the project trusted, preventing untrusted eager stdio execution.
-- `extensions/haziq-service-tier.ts` prevents untrusted project configuration from changing request tiers or allow-lists; trusted projects retain normal project-over-global behavior.
+- `extensions/haziq-service-tier.ts` prevents untrusted project configuration from changing request tiers or allow-lists; trusted projects retain normal project-over-global behavior. Unsupported-model tier warnings stay out of the footer (details remain in `/openai-tier status` and notifies).
+- `pi-tool-repair` repairs common open-model tool argument mistakes before execution (null optionals, stringified arrays, field aliases, root bare strings, Kimi anchor bleed). Grammar-leak recovery stays opt-in via its own config.
+- Footer status stays quiet when healthy: cohesion only publishes when degraded or a workflow is active. Optional full footer packages such as `pi-footer` remain user-installed; this package does not call `setFooter`.
 
 ## Development
 
