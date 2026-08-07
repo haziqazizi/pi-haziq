@@ -35,7 +35,7 @@ pi install git:github.com/haziqazizi/pi-haziq
 
 Then start Pi, run `/cohesion setup`, approve its preview, and run `/reload`. Provider credentials, `auth.json`, `models.json`, MCP authentication, sessions, trust decisions, and machine inventories remain machine-local and must be provisioned separately through approved secret mechanisms.
 
-Herdr is optional. When `HERDR_ENV=1`, verify that the Herdr-managed Pi integration is current through Herdr's supported integration command. Never vendor or edit `~/.pi/agent/extensions/herdr-agent-state.ts` from this package.
+Herdr is a **required runtime dependency** for the default Fabric agent transport. Install the `herdr` CLI from https://herdr.dev before or with package setup. `/cohesion setup` runs `herdr integration install pi` when the CLI is present; it never vendors or edits `~/.pi/agent/extensions/herdr-agent-state.ts` itself. When `HERDR_ENV=1`, cohesion also verifies the live pane integration.
 
 ## Multi-agent and Fabric skill routing
 
@@ -48,8 +48,8 @@ When unsure which advanced Fabric path to use, run **`/skill:fabric-guide`**. It
 ### Core path
 
 - Normal coding: `fabric_exec` + skill `fabric-exec` as needed.
-- Casual children: `agents.run` / `agents.spawn` / `agents.wait` inside `fabric_exec` (Fabric agents enabled).
-- Mesh stays **off** unless a later approved contract enables it. Prefer `fabric-workflow` / agents over swarm until mesh is on.
+- Casual children: `agents.run` / `agents.spawn` / `agents.wait` inside `fabric_exec` (Fabric agents enabled; default transport `herdr` opens each child in a background Herdr tab).
+- Mesh is **on** by default so ambient actors, supervisors, and swarm coordination can restore. Prefer `fabric-workflow` / agents for one-shot fan-out; use swarm when durable multi-actor work is required.
 
 ### User-invoked Fabric skills (all enabled)
 

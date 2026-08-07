@@ -4,7 +4,7 @@
   "agents": {
     "enabled": true,
     "runner": "pi",
-    "transport": "process",
+    "transport": "herdr",
     "thinking": "medium",
     "maxConcurrent": 4,
     "maxPerExecution": 100,
@@ -18,13 +18,30 @@
       "write",
       "grep",
       "find",
-      "ls"
+      "ls",
+      "web_search",
+      "source_check",
+      "fetch_content",
+      "get_search_content",
+      "agent_browser",
+      "todo",
+      "start_loop",
+      "start_supervision",
+      "reason_harness_init",
+      "reason_harness_solve",
+      "reason_harness_status"
     ],
     "retainRuns": false,
     "notifyOnComplete": true
   },
   "mesh": {
-    "enabled": false
+    "enabled": true,
+    "actorScope": "project",
+    "maxEventBytes": 262144,
+    "maxReadEvents": 500,
+    "actorPollMs": 250,
+    "actorQueueLimit": 32,
+    "eventContextChars": 40000
   },
   "capture": {
     "enabled": true,

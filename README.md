@@ -138,7 +138,7 @@ They intentionally contain no credentials. Applying them through `/cohesion setu
 
 ## Herdr
 
-Herdr owns `~/.pi/agent/extensions/herdr-agent-state.ts`. This package never vendors or edits it.
+Fabric agent transport defaults to `herdr`, so the `herdr` CLI from [herdr.dev](https://herdr.dev) is a package prerequisite. `/cohesion setup` checks for the binary and runs `herdr integration install pi` when needed. Herdr owns `~/.pi/agent/extensions/herdr-agent-state.ts`; this package never vendors or edits that file.
 
 When running in Herdr, cohesion reports scoped metadata tokens for the active model, API, thinking level, todo, workflow, and compaction strategy. Background notifications are opt-in:
 

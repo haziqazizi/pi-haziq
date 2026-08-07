@@ -47,7 +47,7 @@ const temp = await mkdtemp(join(tmpdir(), "pi-haziq-smoke."));
 const home = join(temp, "home");
 const cwd = join(temp, "cwd");
 await Promise.all([mkdir(join(home, ".pi", "agent"), { recursive: true }), mkdir(join(home, ".pi", "workflows"), { recursive: true }), mkdir(cwd)]);
-await writeFile(join(home, ".pi", "agent", "fabric.json"), JSON.stringify({ configVersion: 3, fullCodeMode: true, agents: { enabled: true, runner: "pi", transport: "process", defaultTools: ["read", "bash", "edit", "write", "grep", "find", "ls"] }, mesh: { enabled: false }, capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"] } }));
+await writeFile(join(home, ".pi", "agent", "fabric.json"), JSON.stringify({ configVersion: 3, fullCodeMode: true, agents: { enabled: true, runner: "pi", transport: "herdr", extensions: true, defaultTools: ["read", "bash", "edit", "write", "grep", "find", "ls", "todo", "web_search", "agent_browser", "start_loop", "start_supervision", "source_check", "fetch_content", "get_search_content", "reason_harness_init", "reason_harness_solve", "reason_harness_status"] }, mesh: { enabled: true, actorScope: "project" }, capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"] } }));
 await writeFile(join(home, ".pi", "workflows", "settings.json"), JSON.stringify({ keywordTriggerEnabled: false }));
 assert.equal(existsSync(join(root, "APPEND_SYSTEM.md")), true, "package must contain APPEND_SYSTEM.md");
 await symlink(join(root, "APPEND_SYSTEM.md"), join(home, ".pi", "agent", "APPEND_SYSTEM.md"));
@@ -200,7 +200,8 @@ try {
   assert.match(notice.message, /^Haziq cohesion: healthy/m);
   assert.match(notice.message, /^Tools: 3\/3 · Fabric-captured$/m);
   assert.match(notice.message, /^Runtime config: healthy$/m);
-  assert.match(notice.message, /^Herdr: not active$/m);
+  assert.match(notice.message, /^Herdr session: not active$/m);
+  assert.match(notice.message, /^Herdr dependency: /m);
   assert.match(notice.message, /APPEND_SYSTEM\.md$/m);
 
   send({ id: "fabric-captured", type: "prompt", message: "/fabric captured" });

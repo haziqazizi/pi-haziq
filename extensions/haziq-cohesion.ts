@@ -39,6 +39,12 @@ import {
   type MeridianRefreshStatus,
 } from "../src/meridian-refresh.ts";
 import { FABRIC_CAPTURED_TOOLS_EVENT } from "./haziq-fabric.ts";
+import {
+  ensureHerdrIntegration,
+  formatHerdrDependencyReport,
+  inspectHerdrDependency,
+  type HerdrDependencyReport,
+} from "../src/herdr.ts";
 import { applySetup, defaultSetupPaths, formatSetupPlan, planSetup } from "../src/setup.ts";
 
 const EVENT_LOG_LIMIT = 100;
@@ -134,6 +140,7 @@ export default function haziqCohesion(pi: ExtensionAPI) {
   let herdrMetadataInFlight = false;
   let herdrMetadataQueued = false;
   let herdrOperational: boolean | undefined;
+  let herdrDependency: HerdrDependencyReport | undefined;
   let shuttingDown = false;
   let pendingTodoClearsActive = false;
   const pendingTodoCandidates = new Set<number>();
@@ -201,6 +208,22 @@ export default function haziqCohesion(pi: ExtensionAPI) {
 
   function refreshRuntimeConfigHealth() {
     runtimeConfigHealth = inspectRuntimeConfiguration(readJson(FABRIC_CONFIG), readJson(WORKFLOW_SETTINGS_CONFIG));
+  }
+
+  async function refreshHerdrDependency() {
+    herdrDependency = await inspectHerdrDependency({
+      agentDir: SETUP_PATHS.agentDir,
+      exec: async (file, args, options) => {
+        const result = await pi.exec(file, args, { timeout: options?.timeout ?? 5_000 });
+        return {
+          code: result.code,
+          stdout: result.stdout ?? "",
+          stderr: result.stderr ?? "",
+          killed: result.killed,
+        };
+      },
+    });
+    return herdrDependency;
   }
 
   function refreshToolHealth() {
@@ -349,7 +372,11 @@ export default function haziqCohesion(pi: ExtensionAPI) {
       "",
       `Active todo: ${snapshot.activeTodoId === undefined ? "none" : `#${snapshot.activeTodoId}`}`,
       `Running workflows: ${running.length === 0 ? "none" : running.join(", ")}`,
-      `Herdr: ${!herdrEnabled ? "not active" : herdrOperational === false ? "failed" : herdrOperational === true ? "connected" : "detecting"}`,
+      `Herdr session: ${!herdrEnabled ? "not active" : herdrOperational === false ? "failed" : herdrOperational === true ? "connected" : "detecting"}`,
+      `Herdr dependency: ${herdrDependency?.status ?? "unchecked"}`,
+      ...(herdrDependency && herdrDependency.status !== "ready"
+        ? [herdrDependency.message, ...(herdrDependency.details ? [herdrDependency.details] : [])]
+        : []),
       "",
       "Config",
       configStatus(APPEND_SYSTEM_TARGET, appendSystemConfigured()),
@@ -402,32 +429,82 @@ export default function haziqCohesion(pi: ExtensionAPI) {
           const operations = await planSetup(SETUP_PATHS);
           const report = formatSetupPlan(operations);
           const changed = operations.filter((operation) => operation.status !== "unchanged");
-          if (setupAction === "check" || changed.length === 0) {
-            ctx.ui.notify(report, changed.length === 0 ? "info" : "warning");
+          const herdrBefore = await refreshHerdrDependency();
+          const herdrReport = formatHerdrDependencyReport(herdrBefore);
+          const herdrNeedsWork = herdrBefore.status !== "ready";
+          if (setupAction === "check") {
+            ctx.ui.notify(
+              [report, "", herdrReport].join("\n"),
+              changed.length === 0 && !herdrNeedsWork ? "info" : "warning",
+            );
+            return;
+          }
+          if (changed.length === 0 && !herdrNeedsWork) {
+            ctx.ui.notify([report, "", herdrReport].join("\n"), "info");
             return;
           }
           if (!ctx.hasUI) {
-            ctx.ui.notify(`${report}\n\nInteractive confirmation is required to apply setup.`, "warning");
+            ctx.ui.notify(
+              `${report}\n\n${herdrReport}\n\nInteractive confirmation is required to apply setup.`,
+              "warning",
+            );
             return;
           }
           const confirmed = await ctx.ui.confirm(
             "Apply pi-haziq setup?",
-            `${report}\n\nExisting changed files are backed up. Provider credentials and auth files are never touched.`,
+            [
+              report,
+              "",
+              herdrReport,
+              "",
+              "Existing changed files are backed up. Provider credentials and auth files are never touched.",
+              herdrBefore.status === "missing-binary"
+                ? "Herdr CLI is missing: install from https://herdr.dev before agent transport will work."
+                : herdrNeedsWork
+                  ? "If you confirm, setup will run: herdr integration install pi"
+                  : "Herdr dependency is already ready.",
+            ].join("\n"),
           );
           if (!confirmed) {
             ctx.ui.notify("pi-haziq setup cancelled; no files changed.", "info");
             return;
           }
-          const applied = await applySetup(operations);
+          const applied = changed.length > 0 ? await applySetup(operations) : [];
+          let herdrAfterReport = herdrReport;
+          if (herdrNeedsWork && herdrBefore.status !== "missing-binary") {
+            const ensured = await ensureHerdrIntegration({
+              agentDir: SETUP_PATHS.agentDir,
+              exec: async (file, args, options) => {
+                const result = await pi.exec(file, args, { timeout: options?.timeout ?? 60_000 });
+                return {
+                  code: result.code,
+                  stdout: result.stdout ?? "",
+                  stderr: result.stderr ?? "",
+                  killed: result.killed,
+                };
+              },
+              force: herdrBefore.status === "missing-integration",
+            });
+            herdrDependency = ensured.report;
+            herdrAfterReport = formatHerdrDependencyReport(ensured.report);
+          } else {
+            await refreshHerdrDependency();
+            herdrAfterReport = herdrDependency
+              ? formatHerdrDependencyReport(herdrDependency)
+              : herdrReport;
+          }
+          refreshRuntimeConfigHealth();
           ctx.ui.notify(
             [
               `pi-haziq setup applied ${applied.length} change${applied.length === 1 ? "" : "s"}.`,
               ...applied.map((operation) =>
                 `- ${operation.status} ${operation.target}${operation.backup ? ` · backup ${operation.backup}` : ""}`
               ),
+              "",
+              herdrAfterReport,
               "Run /reload, then /cohesion doctor.",
             ].join("\n"),
-            "info",
+            herdrDependency?.status === "ready" || herdrDependency?.status === undefined ? "info" : "warning",
           );
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
@@ -438,11 +515,14 @@ export default function haziqCohesion(pi: ExtensionAPI) {
       if (action === "doctor" || action === "status") {
         refreshToolHealth();
         refreshRuntimeConfigHealth();
+        await refreshHerdrDependency();
         refreshCapabilities(ctx);
         updateStatus(ctx);
         queueHerdrMetadata();
-        const healthy = toolHealth.status === "healthy" && runtimeConfigHealth.status === "healthy";
-        ctx.ui.notify(doctorReport(), healthy ? "info" : "warning");
+        const healthy =
+          toolHealth.status === "healthy" && runtimeConfigHealth.status === "healthy";
+        const herdrReady = herdrDependency?.status === "ready";
+        ctx.ui.notify(doctorReport(), healthy && herdrReady !== false ? "info" : "warning");
         return;
       }
       ctx.ui.notify("Usage: /cohesion [status|doctor|events|contract|reload|setup [check]]", "warning");
