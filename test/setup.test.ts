@@ -20,6 +20,14 @@ async function fixture(): Promise<{ root: string; paths: SetupPaths }> {
   await writeJson(join(packageRoot, "config", "settings.fragment.json"), {
     enabledModels: ["meridian/claude-fable-5", "tokenmaxxing/gpt-5.6-sol"],
     compaction: { enabled: true, reserveTokens: 16384 },
+    subagents: {
+      agentOverrides: {
+        scout: { tools: ["read", "bash"] },
+      },
+    },
+  });
+  await writeJson(join(packageRoot, "config", "pi-subagents-bridge.json"), {
+    intercomBridge: { mode: "off", resultDelivery: false },
   });
   await writeJson(join(packageRoot, "config", "pi-better-compaction.json"), {
     enabled: true,
@@ -81,13 +89,13 @@ test("setup previews, backs up, applies, and becomes idempotent without changing
     });
 
     const operations = await planSetup(paths);
-    assert.equal(operations.length, 7);
+    assert.equal(operations.length, 8);
     assert.equal(operations.filter((operation) => operation.status === "update").length, 4);
-    assert.equal(operations.filter((operation) => operation.status === "create").length, 3);
-    assert.match(formatSetupPlan(operations), /pi-haziq setup: 7 changes/);
+    assert.equal(operations.filter((operation) => operation.status === "create").length, 4);
+    assert.match(formatSetupPlan(operations), /pi-haziq setup: 8 changes/);
 
     const applied = await applySetup(operations, new Date("2026-07-25T20:15:00.000Z"));
-    assert.equal(applied.length, 7);
+    assert.equal(applied.length, 8);
     assert.equal(applied.filter((operation) => operation.backup).length, 4);
     assert.equal((await lstat(join(paths.agentDir, "APPEND_SYSTEM.md"))).isSymbolicLink(), true);
     assert.equal(await readlink(join(paths.agentDir, "APPEND_SYSTEM.md")), join(paths.packageRoot, "APPEND_SYSTEM.md"));

@@ -51,6 +51,7 @@ Compatibility wrappers preserve upstream behavior while closing integration seam
 - `extensions/haziq-service-tier.ts` prevents untrusted project configuration from changing request tiers or allow-lists; trusted projects retain normal project-over-global behavior. Unsupported-model tier warnings stay out of the footer (details remain in `/openai-tier status` and notifies).
 - `pi-tool-repair` repairs common open-model tool argument mistakes before execution (null optionals, stringified arrays, field aliases, root bare strings, Kimi anchor bleed). Grammar-leak recovery stays opt-in via its own config.
 - Footer status stays quiet when healthy: cohesion only publishes when degraded or a workflow is active. Optional full footer packages such as `pi-footer` remain user-installed; this package does not call `setFooter`.
+- `/cohesion setup` turns off the pi-subagents intercom bridge by default and strips `intercom` / `contact_supervisor` from builtin agent tool allowlists. Pi's child `--tools` allowlist drops those names unless a child runtime actually registers them; Fabric-oriented recon should not require supervisor chat. Re-enable the bridge in `~/.pi/agent/extensions/subagent/config.json` only when you need live parent/child coordination.
 
 ## Development
 
