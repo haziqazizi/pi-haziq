@@ -4,7 +4,7 @@
   "agents": {
     "enabled": true,
     "runner": "pi",
-    "transport": "herdr",
+    "transport": "process",
     "thinking": "medium",
     "maxConcurrent": 4,
     "maxPerExecution": 100,
@@ -26,7 +26,6 @@
       "agent_browser",
       "todo",
       "start_loop",
-      "start_supervision",
       "reason_harness_init",
       "reason_harness_solve",
       "reason_harness_status"

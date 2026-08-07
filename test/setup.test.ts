@@ -29,23 +29,19 @@ async function fixture(): Promise<{ root: string; paths: SetupPaths }> {
     active: true,
     serviceTier: "priority",
   });
-  await writeJson(join(packageRoot, "config", "workflow-model-tiers.json"), {
-    tiers: { small: "small-model", big: "big-model" },
-  });
   await writeJson(join(packageRoot, "config", "fabric.json"), {
     configVersion: 3,
     fullCodeMode: true,
     agents: {
       enabled: true,
       runner: "pi",
-      transport: "herdr",
+      transport: "process",
       extensions: true,
       defaultTools: ["read", "bash", "edit", "write", "grep", "find", "ls", "todo", "web_search"],
     },
     mesh: { enabled: true, actorScope: "project" },
     capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"] },
   });
-  await writeJson(join(packageRoot, "config", "workflow-settings.json"), { keywordTriggerEnabled: false });
   return {
     root,
     paths: {
@@ -90,13 +86,13 @@ test("setup previews, backs up, applies, and becomes idempotent without changing
     });
 
     const operations = await planSetup(paths);
-    assert.equal(operations.length, 7);
+    assert.equal(operations.length, 5);
     assert.equal(operations.filter((operation) => operation.status === "update").length, 4);
-    assert.equal(operations.filter((operation) => operation.status === "create").length, 3);
-    assert.match(formatSetupPlan(operations), /pi-haziq setup: 7 changes/);
+    assert.equal(operations.filter((operation) => operation.status === "create").length, 1);
+    assert.match(formatSetupPlan(operations), /pi-haziq setup: 5 changes/);
 
     const applied = await applySetup(operations, new Date("2026-07-25T20:15:00.000Z"));
-    assert.equal(applied.length, 7);
+    assert.equal(applied.length, 5);
     assert.equal(applied.filter((operation) => operation.backup).length, 4);
     assert.equal((await lstat(join(paths.agentDir, "APPEND_SYSTEM.md"))).isSymbolicLink(), true);
     assert.equal(await readlink(join(paths.agentDir, "APPEND_SYSTEM.md")), join(paths.packageRoot, "APPEND_SYSTEM.md"));
@@ -125,12 +121,10 @@ test("setup previews, backs up, applies, and becomes idempotent without changing
 
     const fabric = JSON.parse(await readFile(join(paths.agentDir, "fabric.json"), "utf8"));
     assert.equal(fabric.agents.enabled, true);
-    assert.equal(fabric.agents.transport, "herdr");
+    assert.equal(fabric.agents.transport, "process");
     assert.equal(fabric.mesh.enabled, true);
     assert.ok(fabric.agents.defaultTools.includes("web_search"));
     assert.deepEqual(fabric.capture.keepVisible, ["fabric_exec"]);
-    const workflowSettings = JSON.parse(await readFile(join(paths.workflowDir, "settings.json"), "utf8"));
-    assert.equal(workflowSettings.keywordTriggerEnabled, false);
 
     const secondPlan = await planSetup(paths);
     assert.ok(secondPlan.every((operation) => operation.status === "unchanged"));

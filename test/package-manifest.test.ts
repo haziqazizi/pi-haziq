@@ -34,10 +34,9 @@ test("package exposes all Fabric skills plus reason-harness", () => {
   assert.ok(pkg.pi.extensions.includes("./extensions/haziq-fabric.ts"));
   assert.equal(pkg.pi.extensions.includes("./node_modules/pi-fabric/dist/index.js"), false);
   assert.equal(pkg.dependencies["pi-fabric"], "0.40.1");
-  assert.equal(pkg.dependencies["pi-subagents"], undefined);
   assert.equal(pkg.dependencies["pi-tool-repair"], "0.1.10");
   assert.equal(pkg.dependencies["@monotykamary/pi-loop"], "0.1.17");
-  assert.equal(pkg.dependencies["@monotykamary/pi-supervisor"], "0.5.13");
+  assert.equal(pkg.dependencies["@monotykamary/pi-supervisor"], undefined);
   assert.equal(pkg.dependencies["pi-reason-harness"], "1.0.7");
   assert.equal(pkg.dependencies["pi-invisible-continue"], "0.3.6");
   assert.equal(pkg.dependencies["pi-autoresearch-harness"], "1.0.4");
@@ -47,11 +46,8 @@ test("package exposes all Fabric skills plus reason-harness", () => {
   assert.ok(pkg.bundledDependencies.includes("@monotykamary/pi-loop"));
   assert.equal(pkg.engines.node, ">=24");
   assert.ok(pkg.bundledDependencies.includes("pi-fabric"));
-  assert.equal(pkg.bundledDependencies.includes("pi-subagents"), false);
 });
 
-test("does not package Dynamic Workflows", () => {
-});
 
 test("uses reviewed upstream Fabric with its isolated worker dependency", () => {
   const fabric = JSON.parse(readFileSync(join(root, "node_modules/pi-fabric/package.json"), "utf8")) as {

@@ -18,7 +18,7 @@ test("the extension composes the package contract when project or CLI append tex
   assert.equal(appendPiHaziqContract(composed, policy), composed, "contract must not duplicate across turns or reloads");
 });
 
-test("APPEND_SYSTEM routes Fabric skills via fabric-guide with mesh on and herdr transport", async () => {
+test("APPEND_SYSTEM routes Fabric skills via fabric-guide with mesh on and process transport", async () => {
   const policy = await readFile(join(root, "APPEND_SYSTEM.md"), "utf8");
   assert.match(policy, /## Multi-agent and Fabric skill routing/);
   assert.match(policy, /\/skill:fabric-guide/);
@@ -26,9 +26,8 @@ test("APPEND_SYSTEM routes Fabric skills via fabric-guide with mesh on and herdr
   assert.match(policy, /\/skill:fabric-supervisor/);
   assert.match(policy, /agents\.run/);
   assert.match(policy, /agents\.spawn/);
-  assert.match(policy, /Dynamic Workflows are not packaged/);
   assert.match(policy, /Mesh is \*\*on\*\* by default/);
-  assert.match(policy, /transport `herdr`/);
+  assert.match(policy, /transport is \*\*`process`\*\*/);
 });
 
 test("APPEND_SYSTEM freezes the approved update, reload, setup, publication, and secret boundaries", async () => {
@@ -43,8 +42,8 @@ test("APPEND_SYSTEM freezes the approved update, reload, setup, publication, and
   assert.match(policy, /publish or update a pull request/);
   assert.match(policy, /merge only with explicit authority and green evidence/);
   assert.match(policy, /Never commit or print credentials/);
-  assert.match(policy, /required runtime dependency/);
-  assert.match(policy, /herdr integration install pi/);
+  assert.match(policy, /Do not assume Herdr exists/);
+  assert.match(policy, /HERDR_ENV=1/);
 });
 
 test("APPEND_SYSTEM names the captured tool refs it requires, not bare tool names", async () => {

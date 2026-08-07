@@ -33,6 +33,7 @@ test("inspectHerdrDependency reports missing binary", async () => {
     platform: "linux",
   });
   assert.equal(report.status, "missing-binary");
+  assert.match(report.message, /[Oo]ptional/);
   assert.match(report.message, /herdr\.dev/);
 });
 

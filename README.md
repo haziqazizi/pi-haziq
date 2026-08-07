@@ -10,9 +10,9 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 - Use native `/responses/compact` for Responses-family sessions.
 - Delegate Anthropic-style text compaction to `tokenmaxxing/gpt-5.6-sol`.
 - Refresh Meridian's live model catalog while preserving conservative local capabilities when the endpoint lists IDs only.
-- Route casual child agents through Fabric `agents.*` and fleet orchestration through Dynamic Workflows.
-- Correlate todo tasks, named subagents, dynamic workflows, loops, MCP calls, compaction, and artifacts through versioned Pi events.
-- Enrich Herdr panes when `HERDR_ENV=1` without bundling or replacing Herdr's managed Pi integration.
+- Route casual child agents through Fabric `agents.*` and user-invoked Fabric skills.
+- Correlate todo tasks, Fabric agent runs, loops, MCP calls, compaction, and artifacts through versioned Pi events.
+- When `HERDR_ENV=1`, optionally enrich Herdr panes without bundling or replacing Herdr's managed Pi integration. Never require Herdr.
 - Fail open with visible diagnostics when an optional integration is unavailable.
 - Keep every Pi session on the reviewed package revision through an instruction-driven `APPEND_SYSTEM.md` contract.
 - Apply approved non-secret configuration through an explicit, previewed, and reversible `/cohesion setup` command.
@@ -23,7 +23,6 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 |---|---:|---|
 | `pi-multi-pass` | 1.3.0 | Subscription pools and provider fallback |
 | `@monotykamary/pi-loop` | 0.1.17 | Verification loop (multi-modal verify-before-done) |
-| `@monotykamary/pi-supervisor` | 0.5.13 | Outcome supervision / steering |
 | `pi-reason-harness` | 1.0.7 | Iterate → verify → improve reasoning harness |
 | `pi-invisible-continue` | 0.3.6 | Continue agent turns without a visible user prompt |
 | `pi-autoresearch-harness` | 1.0.4 | Autonomous experiment loops with worktrees |
@@ -40,7 +39,7 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 
 Fabric's separate worker process intentionally carries its reviewed `@earendil-works/pi-ai@0.84.1` runtime dependency; upstream's package-manifest test rejects moving it to a host peer because the standalone worker imports it directly. Production smoke pins that sole core-runtime exception and rejects any expansion.
 
-`extensions/haziq-cohesion.ts` observes their public Pi surfaces and emits normalized `haziq:*` lifecycle events. It does not reimplement their algorithms. Multi-agent work uses Fabric agents and user-invoked Fabric skills (`/skill:fabric-guide` router). Dynamic Workflows are not packaged. The package contract in `APPEND_SYSTEM.md` is authoritative. Quintin's `workflow-authoring` and `workflow-patterns` files remain bundled as runtime-owned references but are not separately advertised to the model; `designing-dynamic-workflows` loads the relevant one only when needed. Fabric's advanced skills are likewise not registered.
+`extensions/haziq-cohesion.ts` observes their public Pi surfaces and emits normalized `haziq:*` lifecycle events. It does not reimplement their algorithms. Multi-agent work uses Fabric agents and user-invoked Fabric skills (`/skill:fabric-guide` router). The package contract in `APPEND_SYSTEM.md` is authoritative.
 
 This package requires Node.js 24 or newer because Fabric's sandbox runtime does.
 
@@ -52,8 +51,7 @@ Compatibility wrappers preserve upstream behavior while closing integration seam
 - `extensions/haziq-service-tier.ts` prevents untrusted project configuration from changing request tiers or allow-lists; trusted projects retain normal project-over-global behavior. Unsupported-model tier warnings stay out of the footer (details remain in `/openai-tier status` and notifies).
 - `pi-tool-repair` repairs common open-model tool argument mistakes before execution (null optionals, stringified arrays, field aliases, root bare strings, Kimi anchor bleed). Grammar-leak recovery stays opt-in via its own config.
 - Fabric agents are enabled; **all Fabric skills are registered** (including `fabric-guide` router). Mesh stays off by default.
-- Dynamic Workflows are **not** packaged.
-- Monty `/loop`, supervisor, reason-harness, invisible-continue, autoresearch, and queue-steer remain packaged.
+- Monty `/loop`, reason-harness, invisible-continue, autoresearch, and queue-steer remain packaged.
 - Footer status stays quiet when healthy: cohesion only publishes when degraded or a workflow is active. Optional full footer packages such as `pi-footer` remain user-installed; this package does not call `setFooter`.
 
 ## Development
@@ -119,7 +117,7 @@ Inside Pi:
 /cohesion setup
 ```
 
-The doctor reports expected captured tools, dual-subagent runtime configuration drift, the active model/API, compaction strategy, service-tier state, active todo/workflow correlation, Herdr availability, machine configuration presence, and the last Meridian refresh result with published/capability model counts and timestamp. Configuration drift is repaired explicitly with `/cohesion setup`, followed by `/reload`.
+The doctor reports expected captured tools, Fabric runtime configuration drift, the active model/API, compaction strategy, service-tier state, active todo/run correlation, optional Herdr session status, machine configuration presence, and the last Meridian refresh result with published/capability model counts and timestamp. Configuration drift is repaired explicitly with `/cohesion setup`, followed by `/reload`.
 
 Pi refreshes dynamic model providers during online startup, model-picker refresh, and `pi update`. Meridian discovery reads the global `~/.pi/agent/models.json` provider configuration only; project files cannot change its endpoint or credentials. Current Meridian `/v1/models` responses list model IDs, so local `contextWindow` and `maxTokens` values remain authoritative until Meridian publishes validated capability fields.
 
@@ -138,7 +136,7 @@ They intentionally contain no credentials. Applying them through `/cohesion setu
 
 ## Herdr
 
-Fabric agent transport defaults to `herdr`, so the `herdr` CLI from [herdr.dev](https://herdr.dev) is a package prerequisite. `/cohesion setup` checks for the binary and runs `herdr integration install pi` when needed. Herdr owns `~/.pi/agent/extensions/herdr-agent-state.ts`; this package never vendors or edits that file. On load, `haziq-fabric` pins absolute `PI_FABRIC_PI_BINARY` (preferring `cli.js`) and a child `PATH`, opens Fabric children as same-tab sibling splits (right/down, no focus steal), and injects that `PATH` on each Herdr pane—no custom `pi-fabric-node` launcher.
+Fabric agent transport defaults to `process` (detached workers). Herdr is optional: only when `HERDR_ENV=1` and transport is set to `herdr` do children open in panes. `/cohesion setup` may run `herdr integration install pi` if the CLI is already present and the integration file is missing. Herdr owns `~/.pi/agent/extensions/herdr-agent-state.ts`; this package never vendors or edits that file. On load, `haziq-fabric` pins absolute `PI_FABRIC_PI_BINARY` (preferring `cli.js`) and a child `PATH`. When inside Herdr, it may open Fabric children as same-tab sibling splits.
 
 When running in Herdr, cohesion reports scoped metadata tokens for the active model, API, thinking level, todo, workflow, and compaction strategy. Background notifications are opt-in:
 

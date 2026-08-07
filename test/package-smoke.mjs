@@ -46,9 +46,8 @@ assert.ok(providerAddress && typeof providerAddress === "object");
 const temp = await mkdtemp(join(tmpdir(), "pi-haziq-smoke."));
 const home = join(temp, "home");
 const cwd = join(temp, "cwd");
-await Promise.all([mkdir(join(home, ".pi", "agent"), { recursive: true }), mkdir(join(home, ".pi", "workflows"), { recursive: true }), mkdir(cwd)]);
-await writeFile(join(home, ".pi", "agent", "fabric.json"), JSON.stringify({ configVersion: 3, fullCodeMode: true, agents: { enabled: true, runner: "pi", transport: "herdr", extensions: true, defaultTools: ["read", "bash", "edit", "write", "grep", "find", "ls", "todo", "web_search", "agent_browser", "start_loop", "start_supervision", "source_check", "fetch_content", "get_search_content", "reason_harness_init", "reason_harness_solve", "reason_harness_status"] }, mesh: { enabled: true, actorScope: "project" }, capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"] } }));
-await writeFile(join(home, ".pi", "workflows", "settings.json"), JSON.stringify({ keywordTriggerEnabled: false }));
+await Promise.all([mkdir(join(home, ".pi", "agent"), { recursive: true }), mkdir(cwd)]);
+await writeFile(join(home, ".pi", "agent", "fabric.json"), JSON.stringify({ configVersion: 3, fullCodeMode: true, agents: { enabled: true, runner: "pi", transport: "process", extensions: true, defaultTools: ["read", "bash", "edit", "write", "grep", "find", "ls", "todo", "web_search", "agent_browser", "start_loop", "source_check", "fetch_content", "get_search_content", "reason_harness_init", "reason_harness_solve", "reason_harness_status"] }, mesh: { enabled: true, actorScope: "project" }, capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"] } }));
 assert.equal(existsSync(join(root, "APPEND_SYSTEM.md")), true, "package must contain APPEND_SYSTEM.md");
 await symlink(join(root, "APPEND_SYSTEM.md"), join(home, ".pi", "agent", "APPEND_SYSTEM.md"));
 await writeFile(
@@ -178,7 +177,7 @@ try {
   assert.equal(commands.success, true);
   const names = commands.data.commands.map((command) => command.name);
   assert.equal(names.filter((name) => name === "cohesion").length, 1, "cohesion command must load exactly once");
-  assert.equal(names.includes("workflows"), false, "Dynamic workflow command must not be registered");
+  assert.equal(names.includes("workflows"), false, "workflows command must not be registered");
   assert.ok(names.includes("todos"));
   assert.ok(names.includes("mcp"));
   assert.ok(names.includes("fabric"));
@@ -201,7 +200,7 @@ try {
   assert.match(notice.message, /^Tools: 3\/3 · Fabric-captured$/m);
   assert.match(notice.message, /^Runtime config: healthy$/m);
   assert.match(notice.message, /^Herdr session: not active$/m);
-  assert.match(notice.message, /^Herdr dependency: /m);
+  assert.match(notice.message, /^Herdr dependency \(optional\): /m);
   assert.match(notice.message, /APPEND_SYSTEM\.md$/m);
 
   send({ id: "fabric-captured", type: "prompt", message: "/fabric captured" });

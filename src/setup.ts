@@ -266,20 +266,6 @@ export async function planSetup(paths: SetupPaths): Promise<SetupOperation[]> {
       paths.agentDir,
       paths.lockPath,
     ),
-    planJson(
-      "Dynamic Workflow settings",
-      join(configDir, "workflow-settings.json"),
-      join(paths.workflowDir, "settings.json"),
-      paths.workflowDir,
-      paths.lockPath,
-    ),
-    planJson(
-      "Workflow model tiers",
-      join(configDir, "workflow-model-tiers.json"),
-      join(paths.workflowDir, "model-tiers.json"),
-      paths.workflowDir,
-      paths.lockPath,
-    ),
   ]);
 }
 
