@@ -138,7 +138,7 @@ They intentionally contain no credentials. Applying them through `/cohesion setu
 
 ## Herdr
 
-Fabric agent transport defaults to `herdr`, so the `herdr` CLI from [herdr.dev](https://herdr.dev) is a package prerequisite. `/cohesion setup` checks for the binary and runs `herdr integration install pi` when needed. Herdr owns `~/.pi/agent/extensions/herdr-agent-state.ts`; this package never vendors or edits that file. On load, `haziq-fabric` pins absolute `PI_FABRIC_PI_BINARY` / `PI_FABRIC_NODE_BINARY` (preferring the real `cli.js` entrypoint) so Herdr child panes do not fail with `spawn pi ENOENT` or missing `node` on a minimal PATH.
+Fabric agent transport defaults to `herdr`, so the `herdr` CLI from [herdr.dev](https://herdr.dev) is a package prerequisite. `/cohesion setup` checks for the binary and runs `herdr integration install pi` when needed. Herdr owns `~/.pi/agent/extensions/herdr-agent-state.ts`; this package never vendors or edits that file. On load, `haziq-fabric` pins absolute `PI_FABRIC_PI_BINARY` / a PATH-injecting `PI_FABRIC_NODE_BINARY` launcher (preferring the real `cli.js` entrypoint) and prefers that override when launching workers, so Herdr child panes do not fail with `spawn pi ENOENT`, missing `node`, or `spawn npx ENOENT` from extension startup on a minimal PATH.
 
 When running in Herdr, cohesion reports scoped metadata tokens for the active model, API, thinking level, todo, workflow, and compaction strategy. Background notifications are opt-in:
 

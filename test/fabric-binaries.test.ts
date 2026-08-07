@@ -1,9 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { chmodSync, mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { pinFabricLaunchBinaries, resolveNodeBinary, resolvePiBinary } from "../src/fabric-binaries.ts";
+import { dirname, join } from "node:path";
+import {
+  buildFabricChildPath,
+  ensureFabricNodeLauncher,
+  pinFabricLaunchBinaries,
+  resolveNodeBinary,
+  resolvePiBinary,
+} from "../src/fabric-binaries.ts";
 
 function makeExec(root: string, name: string): string {
   const dir = join(root, "bin");
@@ -120,21 +126,44 @@ test("resolveNodeBinary prefers current node execPath", () => {
   );
 });
 
-test("pinFabricLaunchBinaries writes absolute env overrides", () => {
+test("pinFabricLaunchBinaries writes absolute env overrides and PATH launcher", () => {
   const root = mkdtempSync(join(tmpdir(), "pi-bin-"));
   const piPath = makeExec(root, "pi");
   const nodePath = makeExec(root, "node");
+  const home = join(root, "home");
+  mkdirSync(home, { recursive: true });
   const env: NodeJS.ProcessEnv = { PATH: join(root, "bin") };
   const pinned = pinFabricLaunchBinaries({
     env,
-    home: join(root, "empty-home"),
+    home,
     pathDirs: [join(root, "bin")],
     execPath: nodePath,
   });
   assert.equal(pinned.piBinary, piPath);
   assert.equal(pinned.nodeBinary, nodePath);
   assert.equal(env.PI_FABRIC_PI_BINARY, piPath);
-  assert.equal(env.PI_FABRIC_NODE_BINARY, nodePath);
+  assert.equal(env.PI_FABRIC_NODE_BINARY, pinned.launcherBinary);
+  assert.match(env.PI_FABRIC_NODE_BINARY ?? "", /pi-fabric-node$/);
+  assert.ok((env.PATH ?? "").includes(join(root, "bin")));
+  assert.ok(existsSync(pinned.launcherBinary));
+});
+
+test("ensureFabricNodeLauncher exports PATH then execs real node", () => {
+  const root = mkdtempSync(join(tmpdir(), "pi-bin-"));
+  const nodePath = makeExec(root, "node");
+  const home = join(root, "home");
+  mkdirSync(home, { recursive: true });
+  const launcher = ensureFabricNodeLauncher({
+    home,
+    nodeBinary: nodePath,
+    env: { PATH: "/usr/bin" },
+    execPath: nodePath,
+    pathDirs: ["/usr/bin"],
+  });
+  const body = readFileSync(launcher, "utf8");
+  assert.match(body, /export PATH=/);
+  assert.ok(body.includes(nodePath));
+  assert.ok(buildFabricChildPath({ nodeBinary: nodePath, env: { PATH: "/usr/bin" }, home }).includes(dirname(nodePath)));
 });
 
 test("pinFabricLaunchBinaries does not replace a working absolute override", () => {

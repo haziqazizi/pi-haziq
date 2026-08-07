@@ -6,7 +6,9 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const { pinFabricLaunchBinaries } = await import(pathToFileURL(join(root, "src/fabric-binaries.ts")).href);
+const { ensureFabricRuntimePrefersNodeOverride } = await import(pathToFileURL(join(root, "src/fabric-runtime-patch.ts")).href);
 const pinned = pinFabricLaunchBinaries();
+console.log("runtime-patch", ensureFabricRuntimePrefersNodeOverride(join(root, "src/fabric-runtime-patch.ts")));
 
 if (process.env.HERDR_ENV !== "1" || !process.env.HERDR_SOCKET_PATH || !process.env.HERDR_WORKSPACE_ID) {
   console.log("skip: not inside Herdr");
@@ -23,7 +25,7 @@ const config = {
   ...DEFAULT_FABRIC_CONFIG.agents,
   transport: "herdr",
   defaultTools: ["read", "ls"],
-  extensions: false,
+  extensions: true,
   retainRuns: true,
   notifyOnComplete: false,
   timeoutMs: 180_000,
@@ -45,7 +47,7 @@ try {
     task: "Reply with exactly the text HERDR_E2E_OK and nothing else. Do not use tools.",
     transport: "herdr",
     tools: [],
-    extensions: false,
+    extensions: true,
     thinking: "off",
   });
   const payload = {
@@ -59,8 +61,12 @@ try {
     runRoot,
   };
   console.log(JSON.stringify(payload, null, 2));
-  if (/ENOENT|spawn pi/i.test(String(result.error || ""))) {
+  if (/spawn pi ENOENT/i.test(String(result.error || ""))) {
     console.error("FAIL: still spawn pi ENOENT");
+    process.exit(1);
+  }
+  if (/spawn npx ENOENT/i.test(String(result.error || ""))) {
+    console.error("FAIL: still spawn npx ENOENT (PATH launcher not applied)");
     process.exit(1);
   }
   if (result.status === "completed") {

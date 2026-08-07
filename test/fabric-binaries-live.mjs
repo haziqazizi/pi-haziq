@@ -227,9 +227,23 @@ if (failures.length) {
   console.error("FAIL\n" + failures.join("\n"));
   process.exit(1);
 }
+if (!pinned.launcherBinary || !pinned.launcherBinary.includes("pi-fabric-node")) {
+  failures.push(`launcher missing: ${pinned.launcherBinary}`);
+}
+const launcherProbe = await run(pinned.launcherBinary, ["-e", "console.log('LAUNCHER_OK')"], {
+  PATH: "/usr/bin:/bin",
+  HOME: process.env.HOME,
+});
+if (!launcherProbe.ok || !launcherProbe.stdout.includes("LAUNCHER_OK")) {
+  failures.push(`launcher node exec failed: ${JSON.stringify(launcherProbe)}`);
+} else {
+  console.log("ok: PATH launcher execs real node");
+}
+
 console.log("fabric-binaries live probe: all checks passed");
 console.log("resolved", {
   pi: pinned.piBinary,
   node: pinned.nodeBinary,
+  launcher: pinned.launcherBinary,
   resolvePiBinary: resolvePiBinary(),
 });
