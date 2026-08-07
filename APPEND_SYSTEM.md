@@ -89,6 +89,7 @@ These tools are captured by Fabric and may not appear in the model's tool list. 
 
 - Track multi-step work with the captured todo tool. Create a task per step when the work starts (`extensions.todo({ action: 'create', subject, activeForm })`), move each to `in_progress` as it begins and `completed` as it finishes (`extensions.todo({ action: 'update', id, status })`), and keep the list current so progress survives compaction and stays visible mid-task. Batch todo calls into the same program as the work they describe rather than spending a round trip on bookkeeping alone.
 - For casual child agents, call `agents.run` / `agents.spawn` inside `fabric_exec` (Fabric agents enabled).
+- For verify-before-done task closure, use Monty `/loop` / `start_loop` (not a scheduled prompt timer).
 - For fleet orchestration scripts, call `extensions.workflow` and `extensions.workflow_control` through `fabric_exec`.
 - For web research, fetching pages, PDFs, GitHub repos, or videos, prefer the captured web-access tools — `extensions.web_search`, `extensions.fetch_content`, `extensions.get_search_content` — over ad-hoc `curl` or shell scraping. For JavaScript-heavy pages, interactive flows, or visual checks, use `extensions.agent_browser`.
 

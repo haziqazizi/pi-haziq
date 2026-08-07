@@ -33,7 +33,7 @@ async function fixture(): Promise<{ root: string; paths: SetupPaths }> {
     tiers: { small: "small-model", big: "big-model" },
   });
   await writeJson(join(packageRoot, "config", "fabric.json"), {
-    configVersion: 1, fullCodeMode: true, agents: { enabled: true, runner: "pi", defaultTools: ["read", "bash"] }, mesh: { enabled: false },
+    configVersion: 3, fullCodeMode: true, agents: { enabled: true, runner: "pi", defaultTools: ["read", "bash"] }, mesh: { enabled: false },
     capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"], risks: { workflow: "agent", workflow_control: "execute" } },
   });
   await writeJson(join(packageRoot, "config", "workflow-settings.json"), { keywordTriggerEnabled: false });

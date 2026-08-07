@@ -27,7 +27,7 @@ const coreDependencies = Object.keys(fabric.dependencies ?? {})
 if (JSON.stringify(coreDependencies) !== JSON.stringify(["@earendil-works/pi-ai"])) {
   throw new Error(`unexpected Fabric core runtime dependencies: ${coreDependencies.join(", ")}`);
 }
-if (fabric.dependencies["@earendil-works/pi-ai"] !== "0.82.1") {
+if (fabric.dependencies["@earendil-works/pi-ai"] !== "0.84.1") {
   throw new Error("Fabric standalone worker pi-ai pin changed without review");
 }
 const workerPiAi = path.join(fabricRoot, "node_modules", "@earendil-works", "pi-ai", "package.json");
@@ -35,7 +35,7 @@ if (!fs.existsSync(workerPiAi)) {
   throw new Error("Fabric standalone worker pi-ai runtime is missing from the packed artifact");
 }
 const workerPiAiManifest = JSON.parse(fs.readFileSync(workerPiAi, "utf8"));
-if (workerPiAiManifest.version !== "0.82.1") {
+if (workerPiAiManifest.version !== "0.84.1") {
   throw new Error(`unexpected Fabric worker pi-ai version: ${workerPiAiManifest.version}`);
 }
 NODE

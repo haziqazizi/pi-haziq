@@ -1,5 +1,5 @@
 {
-  "configVersion": 1,
+  "configVersion": 3,
   "fullCodeMode": true,
   "agents": {
     "enabled": true,

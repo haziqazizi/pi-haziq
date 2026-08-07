@@ -9,6 +9,7 @@ This is the durable reconciliation of the package decisions approved in Pi sessi
 | One Git install composes the reviewed extension set. | `package.json` exact dependencies and `pi.extensions` entries | package and production-tarball smokes |
 | Third-party versions are pinned and reviewed before updates. | `package.json`, `package-lock.json`, `AGENTS.md` | TypeScript/package tests and production audit |
 | Two reviewed multi-agent surfaces are packaged: Fabric agents for casual child delegation and Dynamic Workflows for fleet orchestration; mesh stays off; `APPEND_SYSTEM.md` routes which surface to use. | upstream Fabric pin with agents enabled, Dynamic pin, `designing-dynamic-workflows` pin, extension/capture manifest, skills allowlist, and package contract | manifest, routing checks, and isolated package smokes |
+| Monty long-run helpers (verification loop, supervisor, reason-harness, invisible-continue, autoresearch, queue-steer) are packaged; Kolt scheduled loop is not. | exact pins in `package.json` | package manifest tests |
 | Reviewed upstream Fabric is bundled in full code mode as the deterministic host-tool runtime; agents are enabled, mesh is disabled, only `fabric_exec` is advertised, and Dynamic workflow tools remain captured. | exact upstream `pi-fabric` pin, approved `fabric.json`, and package resource allowlist | setup/doctor tests, captured inventory, denial probes, and production-tarball smokes |
 | Opus/Anthropic-style sessions use delegated GPT compaction; Responses models use native compact. | `config/pi-better-compaction.json`, cohesion capability derivation | unit and live package tests |
 | The user's default model remains a user setting. | configuration fragment deliberately omits default provider/model | setup idempotence test |
@@ -34,5 +35,5 @@ These were discussed but explicitly not first-release requirements or would viol
 - Nico Bailon `pi-subagents` is not packaged and must not be installed alongside this package.
 - Cohesion does not invent provider-switch, workflow-progress, artifact, or task-loop semantics when an owning extension exposes no stable public event. It observes public Pi hooks and pinned compatibility seams instead.
 - Cohesion does not complete todos automatically. A delivered workflow must be verified at a faithful surface first.
-- Fabric's standalone worker retains its exact `@earendil-works/pi-ai@0.82.1` runtime dependency; production proof rejects any additional bundled Pi core dependency or unreviewed pin change.
+- Fabric's standalone worker retains its exact `@earendil-works/pi-ai@0.84.1` runtime dependency; production proof rejects any additional bundled Pi core dependency or unreviewed pin change.
 - Prompts and themes are package resource categories, not mandatory empty artifacts; none are shipped until a concrete prompt or theme is selected.

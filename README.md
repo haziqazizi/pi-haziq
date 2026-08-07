@@ -22,7 +22,12 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 | Package | Pin | Responsibility |
 |---|---:|---|
 | `pi-multi-pass` | 1.3.0 | Subscription pools and provider fallback |
-| `@koltmcbride/pi-loop` | 0.2.0 | Scheduled, event, and self-paced loops |
+| `@monotykamary/pi-loop` | 0.1.17 | Verification loop (multi-modal verify-before-done) |
+| `@monotykamary/pi-supervisor` | 0.5.13 | Outcome supervision / steering |
+| `pi-reason-harness` | 1.0.7 | Iterate → verify → improve reasoning harness |
+| `pi-invisible-continue` | 0.3.6 | Continue agent turns without a visible user prompt |
+| `pi-autoresearch-harness` | 1.0.4 | Autonomous experiment loops with worktrees |
+| `@tmustier/pi-queue-steer` (Monty pin) | ff75545 | Visible follow-up queue and steer |
 | `@juicesharp/rpiv-todo` | 2.1.0 | Durable task graph and overlay |
 | `pi-openai-service-tier` | 0.1.4 | OpenAI priority service tier |
 | `pi-tool-repair` | 0.1.10 | Validate-then-repair for common LLM tool-call mistakes (Monty Kamary / monotykamary) |
@@ -31,11 +36,11 @@ A cohesive, opinionated [Pi](https://pi.dev) package composed from reviewed thir
 | `@lll9p/pi-better-compaction` | 0.2.1 | Native Responses compact plus delegated fallback |
 | `@quintinshaw/pi-dynamic-workflows` | `d76cdb5d` (`3.4.1`) | Fleet orchestration runtime; tools captured by Fabric, runtime skills hidden |
 | `@haziqazizi/designing-dynamic-workflows` | `c0320dff` | Single visible Dynamic doctrine skill with pinned runtime adapters |
-| `pi-fabric` | 0.28.6 | Upstream deterministic host-tool runtime; agents and mesh disabled; only `fabric-exec` advertised |
+| `pi-fabric` | 0.40.1 | Upstream deterministic host-tool runtime; agents and mesh disabled; only `fabric-exec` advertised |
 | `pi-web-access` | 0.15.0 | Web search and content fetching for pages, PDFs, GitHub repositories, and videos |
 | `pi-agent-browser-native` | 0.2.72 | Browser automation for interactive pages, JavaScript-heavy pages, and visual checks |
 
-Fabric's separate worker process intentionally carries its reviewed `@earendil-works/pi-ai@0.82.1` runtime dependency; upstream's package-manifest test rejects moving it to a host peer because the standalone worker imports it directly. Production smoke pins that sole core-runtime exception and rejects any expansion.
+Fabric's separate worker process intentionally carries its reviewed `@earendil-works/pi-ai@0.84.1` runtime dependency; upstream's package-manifest test rejects moving it to a host peer because the standalone worker imports it directly. Production smoke pins that sole core-runtime exception and rejects any expansion.
 
 `extensions/haziq-cohesion.ts` observes their public Pi surfaces and emits normalized `haziq:*` lifecycle events. It does not reimplement their algorithms. Casual one-or-few children use Fabric agents inside `fabric_exec`; large fan-out, resume, worktree isolation, and multi-phase verify loops use Dynamic Workflows. The package contract in `APPEND_SYSTEM.md` routes between those surfaces. Quintin's `workflow-authoring` and `workflow-patterns` files remain bundled as runtime-owned references but are not separately advertised to the model; `designing-dynamic-workflows` loads the relevant one only when needed. Fabric's advanced skills are likewise not registered.
 
@@ -44,12 +49,12 @@ This package requires Node.js 24 or newer because Fabric's sandbox runtime does.
 Compatibility wrappers preserve upstream behavior while closing integration seams:
 
 - `extensions/haziq-fabric.ts` keeps Fabric's advanced skills out of automatic discovery, preserves only the package-allowlisted `fabric-exec` skill, and emits a names-only captured-tool inventory so cohesion can verify health without exposing schemas.
-- `extensions/haziq-loop.ts` releases shared event-bus subscriptions during `/reload`, preventing duplicate loop delivery across extension generations.
 - `extensions/haziq-meridian-refresh.ts` attaches Pi's `refreshModels` hook to a globally configured Meridian provider. ID-only catalogs filter the trusted static models; bounded capability metadata can update limits or add models. Offline, malformed, empty, duplicate, and unreachable catalogs retain the static last-known-good list. Credentials and response bodies are never logged or persisted.
 - `extensions/haziq-mcp.ts` delays MCP configuration until `session_start` and excludes project MCP sources unless Pi marks the project trusted, preventing untrusted eager stdio execution.
 - `extensions/haziq-service-tier.ts` prevents untrusted project configuration from changing request tiers or allow-lists; trusted projects retain normal project-over-global behavior. Unsupported-model tier warnings stay out of the footer (details remain in `/openai-tier status` and notifies).
 - `pi-tool-repair` repairs common open-model tool argument mistakes before execution (null optionals, stringified arrays, field aliases, root bare strings, Kimi anchor bleed). Grammar-leak recovery stays opt-in via its own config.
 - Fabric agents are enabled for casual child work via `agents.*` inside `fabric_exec`. Dynamic Workflows remain the fleet surface. `pi-subagents` is not packaged.
+- Monty verification loop (`/loop`, `start_loop`), supervisor, reason-harness, invisible-continue, autoresearch, and queue-steer are packaged. Kolt scheduled `pi-loop` is not.
 - Footer status stays quiet when healthy: cohesion only publishes when degraded or a workflow is active. Optional full footer packages such as `pi-footer` remain user-installed; this package does not call `setFooter`.
 
 ## Development

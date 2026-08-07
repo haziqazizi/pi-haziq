@@ -17,7 +17,12 @@
     "extensions": [
       "./node_modules/pi-multi-pass/extensions",
       "./node_modules/pi-tool-repair/tool-repair.ts",
-      "./extensions/haziq-loop.ts",
+      "./node_modules/@monotykamary/pi-loop/src/index.ts",
+      "./node_modules/@monotykamary/pi-supervisor/src/index.ts",
+      "./node_modules/pi-invisible-continue/continue.ts",
+      "./node_modules/@tmustier/pi-queue-steer/index.ts",
+      "./node_modules/pi-reason-harness/extensions",
+      "./node_modules/pi-autoresearch-harness/extensions",
       "./extensions/haziq-meridian-refresh.ts",
       "./node_modules/@juicesharp/rpiv-todo/index.ts",
       "./extensions/haziq-service-tier.ts",
@@ -32,27 +37,32 @@
     ],
     "skills": [
       "./node_modules/@haziqazizi/designing-dynamic-workflows",
-      "./node_modules/pi-fabric/skills/fabric-exec"
+      "./node_modules/pi-fabric/skills/fabric-exec",
+      "./node_modules/pi-reason-harness/skills/reason-harness"
     ]
   },
   "dependencies": {
     "@haziqazizi/designing-dynamic-workflows": "https://github.com/haziqazizi/designing-dynamic-workflows/archive/c0320dffdcd2ded349220f92ab23e12c390c6f50.tar.gz",
     "@juicesharp/rpiv-todo": "2.1.0",
-    "@koltmcbride/pi-loop": "0.2.0",
     "@lll9p/pi-better-compaction": "0.2.1",
+    "@monotykamary/pi-loop": "0.1.17",
+    "@monotykamary/pi-supervisor": "0.5.13",
     "@quintinshaw/pi-dynamic-workflows": "https://github.com/haziqazizi/pi-dynamic-workflows/archive/d76cdb5da3cb0ad87cfabdc1aa39212047148b45.tar.gz",
+    "@tmustier/pi-queue-steer": "https://github.com/monotykamary/pi-queue-steer/archive/ff755456bc67c904c2f659bf7873541bc386b0b1.tar.gz",
     "pi-agent-browser-native": "0.2.72",
-    "pi-fabric": "0.28.6",
+    "pi-autoresearch-harness": "1.0.4",
+    "pi-fabric": "0.40.1",
     "pi-image-preview": "0.1.5",
+    "pi-invisible-continue": "0.3.6",
     "pi-mcp-adapter": "2.14.0",
     "pi-multi-pass": "1.3.0",
     "pi-openai-service-tier": "0.1.4",
+    "pi-reason-harness": "1.0.7",
     "pi-tool-repair": "0.1.10",
     "pi-web-access": "0.15.0"
   },
   "bundledDependencies": [
     "@juicesharp/rpiv-todo",
-    "@koltmcbride/pi-loop",
     "@lll9p/pi-better-compaction",
     "@quintinshaw/pi-dynamic-workflows",
     "pi-image-preview",
@@ -61,7 +71,13 @@
     "pi-openai-service-tier",
     "@haziqazizi/designing-dynamic-workflows",
     "pi-fabric",
-    "pi-tool-repair"
+    "pi-tool-repair",
+    "@monotykamary/pi-loop",
+    "@monotykamary/pi-supervisor",
+    "pi-reason-harness",
+    "pi-invisible-continue",
+    "pi-autoresearch-harness",
+    "@tmustier/pi-queue-steer"
   ],
   "peerDependencies": {
     "@earendil-works/pi-agent-core": "*",
@@ -101,7 +117,6 @@
   },
   "bundleDependencies": [
     "@juicesharp/rpiv-todo",
-    "@koltmcbride/pi-loop",
     "@lll9p/pi-better-compaction",
     "@quintinshaw/pi-dynamic-workflows",
     "pi-image-preview",
@@ -110,6 +125,12 @@
     "pi-openai-service-tier",
     "@haziqazizi/designing-dynamic-workflows",
     "pi-fabric",
-    "pi-tool-repair"
+    "pi-tool-repair",
+    "@monotykamary/pi-loop",
+    "@monotykamary/pi-supervisor",
+    "pi-reason-harness",
+    "pi-invisible-continue",
+    "pi-autoresearch-harness",
+    "@tmustier/pi-queue-steer"
   ]
 }

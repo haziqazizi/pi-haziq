@@ -47,7 +47,7 @@ const temp = await mkdtemp(join(tmpdir(), "pi-haziq-smoke."));
 const home = join(temp, "home");
 const cwd = join(temp, "cwd");
 await Promise.all([mkdir(join(home, ".pi", "agent"), { recursive: true }), mkdir(join(home, ".pi", "workflows"), { recursive: true }), mkdir(cwd)]);
-await writeFile(join(home, ".pi", "agent", "fabric.json"), JSON.stringify({ configVersion: 1, fullCodeMode: true, agents: { enabled: true, runner: "pi", transport: "process", defaultTools: ["read", "bash", "edit", "write", "grep", "find", "ls"] }, mesh: { enabled: false }, capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"], risks: { workflow: "agent", workflow_control: "execute" } } }));
+await writeFile(join(home, ".pi", "agent", "fabric.json"), JSON.stringify({ configVersion: 3, fullCodeMode: true, agents: { enabled: true, runner: "pi", transport: "process", defaultTools: ["read", "bash", "edit", "write", "grep", "find", "ls"] }, mesh: { enabled: false }, capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"], risks: { workflow: "agent", workflow_control: "execute" } } }));
 await writeFile(join(home, ".pi", "workflows", "settings.json"), JSON.stringify({ keywordTriggerEnabled: false }));
 assert.equal(existsSync(join(root, "APPEND_SYSTEM.md")), true, "package must contain APPEND_SYSTEM.md");
 await symlink(join(root, "APPEND_SYSTEM.md"), join(home, ".pi", "agent", "APPEND_SYSTEM.md"));
@@ -199,7 +199,7 @@ try {
     (event) => event.type === "extension_ui_request" && event.method === "notify" && event.message?.startsWith("Haziq cohesion:"),
   );
   assert.match(notice.message, /^Haziq cohesion: healthy/m);
-  assert.match(notice.message, /^Tools: 8\/8 · Fabric-captured$/m);
+  assert.match(notice.message, /^Tools: 5\/5 · Fabric-captured$/m);
   assert.match(notice.message, /^Runtime config: healthy$/m);
   assert.match(notice.message, /^Herdr: not active$/m);
   assert.match(notice.message, /APPEND_SYSTEM\.md$/m);
@@ -214,7 +214,7 @@ try {
       event.type === "extension_ui_request" &&
       event.method === "notify" &&
       typeof event.message === "string" &&
-      event.message.includes("schedule_loop_wakeup"),
+      event.message.includes("start_loop"),
   );
   const capturedNames = new Set(
     capturedNotice.message.split("\n").map((line) => line.split(" ", 1)[0]),
@@ -222,10 +222,7 @@ try {
   for (const name of [
     "todo",
     "mcp",
-    "LoopCreate",
-    "LoopList",
-    "LoopDelete",
-    "schedule_loop_wakeup",
+    "start_loop",
     "workflow",
     "workflow_control",
   ]) {
@@ -301,7 +298,7 @@ try {
     `unexpected stderr: ${stderr}`,
   );
 
-  console.log("package smoke: healthy, Fabric agents + Dynamic workflows, only fabric-exec advertised, 8/8 tools captured by Fabric, appended contract reached provider exactly once beside project policy, setup check read-only, trusted MCP initialized, reload-safe, no duplicates or extension errors");
+  console.log("package smoke: healthy, Fabric agents + Dynamic workflows, only fabric-exec advertised, 5/5 tools captured by Fabric, appended contract reached provider exactly once beside project policy, setup check read-only, trusted MCP initialized, reload-safe, no duplicates or extension errors");
 } finally {
   child.kill("SIGTERM");
   await new Promise((resolveExit) => {
