@@ -15,7 +15,7 @@ Report vulnerabilities privately to the repository owner. Do not include credent
 - Cohesion persists correlation metadata only, never arbitrary tool inputs or provider payloads.
 - Project MCP and service-tier configuration is ignored until Pi marks the project trusted. Global user configuration remains available.
 - Meridian catalog refresh reads only the global user provider configuration, never project files. It does not execute header commands, print credentials or response bodies, or persist auth in the model store.
-- Herdr remains optional and owns its managed Pi transport integration.
+- Herdr is an external runtime dependency and owns its managed Pi transport integration; this package never vendors that file.
 
 ## Transitive advisory verification
 

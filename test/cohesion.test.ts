@@ -89,11 +89,18 @@ test("reports missing expected tools without throwing", () => {
   assert.deepEqual(complete.missing, []);
 });
 
-test("requires Fabric agents on, mesh off, and capture policy", () => {
+test("requires Fabric agents on, mesh on, herdr transport, and capture policy", () => {
   const healthy = inspectRuntimeConfiguration(
     {
-      configVersion: 3, fullCodeMode: true,
-      agents: { enabled: true }, mesh: { enabled: false },
+      configVersion: 3,
+      fullCodeMode: true,
+      agents: {
+        enabled: true,
+        transport: "herdr",
+        extensions: true,
+        defaultTools: ["read", "bash", "edit", "write", "grep", "find", "ls", "todo"],
+      },
+      mesh: { enabled: true },
       capture: {
         enabled: true,
         hideFromModel: true,
@@ -103,12 +110,20 @@ test("requires Fabric agents on, mesh off, and capture policy", () => {
   );
   assert.deepEqual(healthy, { status: "healthy", problems: [] });
   const drift = inspectRuntimeConfiguration(
-    { configVersion: 3, fullCodeMode: true, agents: { enabled: false }, mesh: { enabled: true }, capture: { enabled: true, hideFromModel: false, keepVisible: ["fabric_exec", "todo"] } },
+    {
+      configVersion: 3,
+      fullCodeMode: true,
+      agents: { enabled: false, transport: "process", extensions: false, defaultTools: ["read"] },
+      mesh: { enabled: false },
+      capture: { enabled: true, hideFromModel: false, keepVisible: ["fabric_exec", "todo"] },
+    },
   );
   assert.equal(drift.status, "degraded");
   assert.ok(drift.problems.some((problem) => /Fabric agents must be enabled/.test(problem)));
-  assert.ok(drift.problems.some((problem) => /mesh/i.test(problem)));
+  assert.ok(drift.problems.some((problem) => /transport must be herdr/.test(problem)));
+  assert.ok(drift.problems.some((problem) => /mesh must be enabled/.test(problem)));
   assert.ok(drift.problems.some((problem) => /Only fabric_exec/.test(problem)));
+  assert.ok(drift.problems.some((problem) => /defaultTools must include bash/.test(problem)));
 });
 
 test("extracts workflow run IDs from typed details and fallback text", () => {

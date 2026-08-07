@@ -33,7 +33,16 @@ async function fixture(): Promise<{ root: string; paths: SetupPaths }> {
     tiers: { small: "small-model", big: "big-model" },
   });
   await writeJson(join(packageRoot, "config", "fabric.json"), {
-    configVersion: 3, fullCodeMode: true, agents: { enabled: true, runner: "pi", defaultTools: ["read", "bash"] }, mesh: { enabled: false },
+    configVersion: 3,
+    fullCodeMode: true,
+    agents: {
+      enabled: true,
+      runner: "pi",
+      transport: "herdr",
+      extensions: true,
+      defaultTools: ["read", "bash", "edit", "write", "grep", "find", "ls", "todo", "web_search"],
+    },
+    mesh: { enabled: true, actorScope: "project" },
     capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"] },
   });
   await writeJson(join(packageRoot, "config", "workflow-settings.json"), { keywordTriggerEnabled: false });
@@ -116,7 +125,9 @@ test("setup previews, backs up, applies, and becomes idempotent without changing
 
     const fabric = JSON.parse(await readFile(join(paths.agentDir, "fabric.json"), "utf8"));
     assert.equal(fabric.agents.enabled, true);
-    assert.equal(fabric.mesh.enabled, false);
+    assert.equal(fabric.agents.transport, "herdr");
+    assert.equal(fabric.mesh.enabled, true);
+    assert.ok(fabric.agents.defaultTools.includes("web_search"));
     assert.deepEqual(fabric.capture.keepVisible, ["fabric_exec"]);
     const workflowSettings = JSON.parse(await readFile(join(paths.workflowDir, "settings.json"), "utf8"));
     assert.equal(workflowSettings.keywordTriggerEnabled, false);

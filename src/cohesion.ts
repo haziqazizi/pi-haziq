@@ -65,6 +65,16 @@ function nestedValue(value: unknown, path: string[]): unknown {
   return current;
 }
 
+export const REQUIRED_FABRIC_CORE_TOOLS = [
+  "read",
+  "bash",
+  "edit",
+  "write",
+  "grep",
+  "find",
+  "ls",
+] as const;
+
 export function inspectRuntimeConfiguration(
   fabric: unknown,
   _workflow?: unknown,
@@ -76,10 +86,22 @@ export function inspectRuntimeConfiguration(
   expect(fabric, ["configVersion"], 3, "Fabric configVersion must be 3");
   expect(fabric, ["fullCodeMode"], true, "Fabric fullCodeMode must be enabled");
   expect(fabric, ["agents", "enabled"], true, "Fabric agents must be enabled");
-  expect(fabric, ["mesh", "enabled"], false, "Fabric mesh must be disabled");
+  expect(fabric, ["agents", "transport"], "herdr", "Fabric agent transport must be herdr");
+  expect(fabric, ["agents", "extensions"], true, "Fabric agent extensions must be enabled");
+  expect(fabric, ["mesh", "enabled"], true, "Fabric mesh must be enabled");
   expect(fabric, ["capture", "enabled"], true, "Fabric capture must be enabled");
   expect(fabric, ["capture", "hideFromModel"], true, "Fabric captured tools must be hidden");
   expect(fabric, ["capture", "keepVisible"], ["fabric_exec"], "Only fabric_exec may stay visible");
+
+  const defaultTools = nestedValue(fabric, ["agents", "defaultTools"]);
+  if (!Array.isArray(defaultTools)) {
+    problems.push("Fabric agents.defaultTools must be an array");
+  } else {
+    const tools = defaultTools.filter((value): value is string => typeof value === "string");
+    for (const tool of REQUIRED_FABRIC_CORE_TOOLS) {
+      if (!tools.includes(tool)) problems.push(`Fabric agents.defaultTools must include ${tool}`);
+    }
+  }
   return { status: problems.length === 0 ? "healthy" : "degraded", problems };
 }
 
