@@ -6,6 +6,7 @@ import {
   extractPaneId,
   extractTabId,
   parseHerdrJson,
+  rewriteWorkerArgv,
 } from "../src/herdr-same-tab.ts";
 
 test("chooseSplitDirection prefers right for wide panes and down for tall panes", () => {
@@ -19,6 +20,15 @@ test("argvToExecCommand shell-quotes argv for pane run", () => {
   assert.equal(
     argvToExecCommand(["/usr/bin/node", "/tmp/worker.js", "--name", "a b"]),
     "exec '/usr/bin/node' '/tmp/worker.js' '--name' 'a b'",
+  );
+});
+
+test("rewriteWorkerArgv replaces bare pi binary", () => {
+  assert.deepEqual(
+    rewriteWorkerArgv(["node", "worker.js", "--pi-binary", "pi", "--task-file", "t"], {
+      PI_FABRIC_PI_BINARY: "/abs/cli.js",
+    }),
+    ["node", "worker.js", "--pi-binary", "/abs/cli.js", "--task-file", "t"],
   );
 });
 
