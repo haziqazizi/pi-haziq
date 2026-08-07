@@ -47,7 +47,7 @@ const temp = await mkdtemp(join(tmpdir(), "pi-haziq-smoke."));
 const home = join(temp, "home");
 const cwd = join(temp, "cwd");
 await Promise.all([mkdir(join(home, ".pi", "agent"), { recursive: true }), mkdir(join(home, ".pi", "workflows"), { recursive: true }), mkdir(cwd)]);
-await writeFile(join(home, ".pi", "agent", "fabric.json"), JSON.stringify({ configVersion: 1, fullCodeMode: true, agents: { enabled: false }, mesh: { enabled: false }, capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"], risks: { workflow: "agent", workflow_control: "execute", subagent: "agent", subagent_wait: "execute" } } }));
+await writeFile(join(home, ".pi", "agent", "fabric.json"), JSON.stringify({ configVersion: 1, fullCodeMode: true, agents: { enabled: true, runner: "pi", transport: "process", defaultTools: ["read", "bash", "edit", "write", "grep", "find", "ls"] }, mesh: { enabled: false }, capture: { enabled: true, hideFromModel: true, keepVisible: ["fabric_exec"], risks: { workflow: "agent", workflow_control: "execute" } } }));
 await writeFile(join(home, ".pi", "workflows", "settings.json"), JSON.stringify({ keywordTriggerEnabled: false }));
 assert.equal(existsSync(join(root, "APPEND_SYSTEM.md")), true, "package must contain APPEND_SYSTEM.md");
 await symlink(join(root, "APPEND_SYSTEM.md"), join(home, ".pi", "agent", "APPEND_SYSTEM.md"));
@@ -179,13 +179,10 @@ try {
   const names = commands.data.commands.map((command) => command.name);
   assert.equal(names.filter((name) => name === "cohesion").length, 1, "cohesion command must load exactly once");
   assert.equal(names.includes("workflows"), true, "Dynamic workflow command must be registered");
-  assert.ok(names.includes("subagents"), "pi-subagents admin command must be registered");
-  assert.ok(names.includes("run"), "pi-subagents run command must be registered");
   assert.ok(names.includes("todos"));
   assert.ok(names.includes("mcp"));
   assert.ok(names.includes("fabric"));
   assert.ok(names.includes("skill:designing-dynamic-workflows"));
-  assert.ok(names.includes("skill:pi-subagents"));
   assert.equal(names.includes("skill:workflow-authoring"), false);
   assert.equal(names.includes("skill:workflow-patterns"), false);
   const fabricSkills = names.filter((name) => name.startsWith("skill:fabric-")).sort();
@@ -202,7 +199,7 @@ try {
     (event) => event.type === "extension_ui_request" && event.method === "notify" && event.message?.startsWith("Haziq cohesion:"),
   );
   assert.match(notice.message, /^Haziq cohesion: healthy/m);
-  assert.match(notice.message, /^Tools: 10\/10 · Fabric-captured$/m);
+  assert.match(notice.message, /^Tools: 8\/8 · Fabric-captured$/m);
   assert.match(notice.message, /^Runtime config: healthy$/m);
   assert.match(notice.message, /^Herdr: not active$/m);
   assert.match(notice.message, /APPEND_SYSTEM\.md$/m);
@@ -231,8 +228,6 @@ try {
     "schedule_loop_wakeup",
     "workflow",
     "workflow_control",
-    "subagent",
-    "subagent_wait",
   ]) {
     assert.equal(capturedNames.has(name), true, `${name} was not captured by Fabric`);
   }
@@ -269,11 +264,9 @@ try {
   const afterNames = afterReload.data.commands.map((command) => command.name);
   assert.equal(afterNames.filter((name) => name === "cohesion").length, 1, "reload must not duplicate cohesion");
   assert.ok(afterNames.includes("skill:designing-dynamic-workflows"));
-  assert.ok(afterNames.includes("skill:pi-subagents"), "pi-subagents skill must survive reload");
   const afterFabricSkills = afterNames.filter((name) => name.startsWith("skill:fabric-")).sort();
   assert.deepEqual(afterFabricSkills, ["skill:fabric-exec"], "only fabric-exec may survive reload");
   assert.ok(afterNames.includes("workflows"), "Dynamic workflow command must survive reload");
-  assert.ok(afterNames.includes("subagents"), "pi-subagents admin command must survive reload");
   assert.equal(afterNames.includes("skill:workflow-authoring"), false);
   assert.equal(afterNames.includes("skill:workflow-patterns"), false);
 
@@ -308,7 +301,7 @@ try {
     `unexpected stderr: ${stderr}`,
   );
 
-  console.log("package smoke: healthy, dual subagent runtime (pi-subagents + Dynamic), only fabric-exec advertised, 10/10 tools captured by Fabric, appended contract reached provider exactly once beside project policy, setup check read-only, trusted MCP initialized, reload-safe, no duplicates or extension errors");
+  console.log("package smoke: healthy, Fabric agents + Dynamic workflows, only fabric-exec advertised, 8/8 tools captured by Fabric, appended contract reached provider exactly once beside project policy, setup check read-only, trusted MCP initialized, reload-safe, no duplicates or extension errors");
 } finally {
   child.kill("SIGTERM");
   await new Promise((resolveExit) => {

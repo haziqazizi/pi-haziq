@@ -2,7 +2,26 @@
   "configVersion": 1,
   "fullCodeMode": true,
   "agents": {
-    "enabled": false
+    "enabled": true,
+    "runner": "pi",
+    "transport": "process",
+    "thinking": "medium",
+    "maxConcurrent": 4,
+    "maxPerExecution": 100,
+    "maxDepth": 2,
+    "timeoutMs": 3600000,
+    "extensions": true,
+    "defaultTools": [
+      "read",
+      "bash",
+      "edit",
+      "write",
+      "grep",
+      "find",
+      "ls"
+    ],
+    "retainRuns": false,
+    "notifyOnComplete": true
   },
   "mesh": {
     "enabled": false
@@ -15,9 +34,7 @@
     ],
     "risks": {
       "workflow": "agent",
-      "workflow_control": "execute",
-      "subagent": "agent",
-      "subagent_wait": "execute"
+      "workflow_control": "execute"
     }
   }
 }

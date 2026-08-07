@@ -46,7 +46,6 @@ npm:pi-mcp-adapter@2.11.0
 - `pi-tool-repair` (now bundled; remove any standalone install)
 npm:@lll9p/pi-better-compaction
 npm:@quintinshaw/pi-dynamic-workflows@3.4.1
-npm:pi-subagents
 npm:pi-fabric
 ```
 
@@ -68,8 +67,7 @@ The first command is read-only. The second shows a key-only, value-redacted prev
 - links the package-owned `APPEND_SYSTEM.md` into Pi's global agent directory (`getAgentDir()`);
 - merges `config/settings.fragment.json` without changing the chosen default provider/model or package list;
 - merges the better-compaction, service-tier, and workflow-tier templates where those pinned owners actually read them;
-- disables Fabric agents/mesh, keeps only `fabric_exec` visible, captures Dynamic and `pi-subagents` tools with explicit risks, and disables Dynamic's competing keyword trigger.
-- sets pi-subagents `intercomBridge.mode` to `off` and removes `intercom`/`contact_supervisor` from builtin agent tool allowlists so child launches do not fail Pi's strict unavailable-tool diagnostic when supervisor tools are not in the child registry.
+- enables Fabric agents for casual children, keeps mesh off, keeps only `fabric_exec` visible, captures Dynamic workflow tools with explicit risks, disables Dynamic's competing keyword trigger, and removes packaged `pi-subagents`.
 
 It never touches `auth.json`, `models.json`, provider credentials, MCP authentication, sessions, trust decisions, or caches. If an owned JSON target is malformed, an unexpected configuration symlink is present, or any target changes after preview, setup fails before changing files. Pi agent-directory overrides are honored for Pi-owned files; pinned extensions that hardcode `~/.pi` continue to receive config there.
 

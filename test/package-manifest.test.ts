@@ -14,16 +14,14 @@ const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
 
 const dynamicExtension = "./node_modules/@quintinshaw/pi-dynamic-workflows/extensions/workflow.ts";
 
-test("package exposes Dynamic doctrine, Fabric authoring, and pi-subagents skills", () => {
+test("package exposes Dynamic doctrine and Fabric authoring skills", () => {
   assert.deepEqual(pkg.pi.skills, [
     "./node_modules/@haziqazizi/designing-dynamic-workflows",
     "./node_modules/pi-fabric/skills/fabric-exec",
-    "./node_modules/pi-subagents/skills",
   ]);
   assert.equal(pkg.pi.skills.some((path) => path.includes("pi-dynamic-workflows/skills/")), false);
   assert.equal(pkg.pi.skills.some((path) => /pi-fabric\/skills\/(?!fabric-exec)/.test(path)), false);
   assert.ok(pkg.pi.extensions.includes(dynamicExtension));
-  assert.ok(pkg.pi.extensions.includes("./node_modules/pi-subagents/index.ts"));
   assert.ok(pkg.pi.extensions.includes("./extensions/haziq-fabric.ts"));
   assert.equal(pkg.pi.extensions.includes("./node_modules/pi-fabric/dist/index.js"), false);
   assert.equal(
@@ -31,7 +29,7 @@ test("package exposes Dynamic doctrine, Fabric authoring, and pi-subagents skill
     "https://github.com/haziqazizi/designing-dynamic-workflows/archive/c0320dffdcd2ded349220f92ab23e12c390c6f50.tar.gz",
   );
   assert.equal(pkg.dependencies["pi-fabric"], "0.28.6");
-  assert.equal(pkg.dependencies["pi-subagents"], "0.40.0");
+  assert.equal(pkg.dependencies["pi-subagents"], undefined);
   assert.equal(pkg.dependencies["pi-tool-repair"], "0.1.10");
   assert.ok(pkg.pi.extensions.includes("./node_modules/pi-tool-repair/tool-repair.ts"));
   assert.ok(pkg.bundledDependencies.includes("pi-tool-repair"));
@@ -40,7 +38,7 @@ test("package exposes Dynamic doctrine, Fabric authoring, and pi-subagents skill
   assert.ok(pkg.bundledDependencies.includes("@haziqazizi/designing-dynamic-workflows"));
   assert.ok(pkg.bundledDependencies.includes("@quintinshaw/pi-dynamic-workflows"));
   assert.ok(pkg.bundledDependencies.includes("pi-fabric"));
-  assert.ok(pkg.bundledDependencies.includes("pi-subagents"));
+  assert.equal(pkg.bundledDependencies.includes("pi-subagents"), false);
 });
 
 test("packages parent model inheritance with asynchronous execution as the default", () => {
@@ -76,8 +74,6 @@ test("hidden runtime contracts remain installed for the visible adapter", () => 
     "node_modules/@quintinshaw/pi-dynamic-workflows/skills/workflow-authoring/SKILL.md",
     "node_modules/@quintinshaw/pi-dynamic-workflows/skills/workflow-patterns/SKILL.md",
     "node_modules/pi-fabric/skills/fabric-exec/SKILL.md",
-    "node_modules/pi-subagents/skills/pi-subagents/SKILL.md",
-    "node_modules/pi-subagents/index.ts",
   ]) {
     assert.equal(existsSync(join(root, path)), true, `missing bundled contract: ${path}`);
   }

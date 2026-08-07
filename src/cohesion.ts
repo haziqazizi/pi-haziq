@@ -10,8 +10,6 @@ export const EXPECTED_TOOLS = [
   "schedule_loop_wakeup",
   "workflow",
   "workflow_control",
-  "subagent",
-  "subagent_wait",
 ] as const;
 
 export type CohesionHealth = "healthy" | "degraded";
@@ -82,15 +80,13 @@ export function inspectRuntimeConfiguration(
   };
   expect(fabric, ["configVersion"], 1, "Fabric configVersion must be 1");
   expect(fabric, ["fullCodeMode"], true, "Fabric fullCodeMode must be enabled");
-  expect(fabric, ["agents", "enabled"], false, "Fabric agents must be disabled");
+  expect(fabric, ["agents", "enabled"], true, "Fabric agents must be enabled");
   expect(fabric, ["mesh", "enabled"], false, "Fabric mesh must be disabled");
   expect(fabric, ["capture", "enabled"], true, "Fabric capture must be enabled");
   expect(fabric, ["capture", "hideFromModel"], true, "Fabric captured tools must be hidden");
   expect(fabric, ["capture", "keepVisible"], ["fabric_exec"], "Only fabric_exec may stay visible");
   expect(fabric, ["capture", "risks", "workflow"], "agent", "Workflow launch risk must be agent");
   expect(fabric, ["capture", "risks", "workflow_control"], "execute", "Workflow control risk must be execute");
-  expect(fabric, ["capture", "risks", "subagent"], "agent", "Subagent launch risk must be agent");
-  expect(fabric, ["capture", "risks", "subagent_wait"], "execute", "Subagent wait risk must be execute");
   expect(workflow, ["keywordTriggerEnabled"], false, "Dynamic keyword trigger must be disabled");
   return { status: problems.length === 0 ? "healthy" : "degraded", problems };
 }
