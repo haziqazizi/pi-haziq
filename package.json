@@ -110,7 +110,9 @@
     "smoke:production": "test/production-package-smoke.sh",
     "audit:production": "node scripts/audit-production.mjs",
     "verify": "npm run check && npm test && npm run smoke && npm run smoke:trust && npm run smoke:meridian",
-    "verify:full": "npm run verify && npm run smoke:production && npm run audit:production"
+    "verify:full": "npm run verify && npm run smoke:production && npm run audit:production && npm run smoke:fabric-binaries && npm run smoke:fabric-herdr-agent",
+    "smoke:fabric-binaries": "node test/fabric-binaries-live.mjs",
+    "smoke:fabric-herdr-agent": "node test/fabric-herdr-agent-e2e.mjs"
   },
   "engines": {
     "node": ">=24"
