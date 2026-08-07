@@ -82,7 +82,7 @@ test("reports missing expected tools without throwing", () => {
   const health = inspectTools(["todo", "workflow", "mcp"]);
   assert.equal(health.status, "degraded");
   assert.deepEqual(health.present, ["todo", "mcp", "workflow"]);
-  assert.ok(health.missing.includes("schedule_loop_wakeup"));
+  assert.ok(health.missing.includes("start_loop"));
 
   const complete = inspectTools(EXPECTED_TOOLS);
   assert.equal(complete.status, "healthy");
@@ -92,7 +92,7 @@ test("reports missing expected tools without throwing", () => {
 test("requires Fabric agents on, mesh off, and Dynamic workflow capture", () => {
   const healthy = inspectRuntimeConfiguration(
     {
-      configVersion: 1, fullCodeMode: true,
+      configVersion: 3, fullCodeMode: true,
       agents: { enabled: true }, mesh: { enabled: false },
       capture: {
         enabled: true,
@@ -108,7 +108,7 @@ test("requires Fabric agents on, mesh off, and Dynamic workflow capture", () => 
   );
   assert.deepEqual(healthy, { status: "healthy", problems: [] });
   const drift = inspectRuntimeConfiguration(
-    { configVersion: 1, fullCodeMode: true, agents: { enabled: false }, mesh: { enabled: true }, capture: { enabled: true, hideFromModel: false, keepVisible: ["fabric_exec", "workflow"], risks: {} } },
+    { configVersion: 3, fullCodeMode: true, agents: { enabled: false }, mesh: { enabled: true }, capture: { enabled: true, hideFromModel: false, keepVisible: ["fabric_exec", "workflow"], risks: {} } },
     { keywordTriggerEnabled: true },
   );
   assert.equal(drift.status, "degraded");

@@ -630,7 +630,7 @@ export default function haziqCohesion(pi: ExtensionAPI) {
         toolCallId: event.toolCallId,
         toolName: event.toolName,
       }, { taskId: snapshot.activeTodoId });
-    } else if (["LoopCreate", "LoopDelete", "schedule_loop_wakeup"].includes(event.toolName)) {
+    } else if (event.toolName === "start_loop") {
       emit("haziq:loop-changed", "loop", {
         toolCallId: event.toolCallId,
         toolName: event.toolName,

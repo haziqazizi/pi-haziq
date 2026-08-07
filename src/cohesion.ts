@@ -4,10 +4,7 @@ export const STATE_ENTRY_TYPE = "haziq-cohesion-state";
 export const EXPECTED_TOOLS = [
   "todo",
   "mcp",
-  "LoopCreate",
-  "LoopList",
-  "LoopDelete",
-  "schedule_loop_wakeup",
+  "start_loop",
   "workflow",
   "workflow_control",
 ] as const;
@@ -78,7 +75,7 @@ export function inspectRuntimeConfiguration(
   const expect = (source: unknown, path: string[], expected: unknown, label: string) => {
     if (JSON.stringify(nestedValue(source, path)) !== JSON.stringify(expected)) problems.push(label);
   };
-  expect(fabric, ["configVersion"], 1, "Fabric configVersion must be 1");
+  expect(fabric, ["configVersion"], 3, "Fabric configVersion must be 3");
   expect(fabric, ["fullCodeMode"], true, "Fabric fullCodeMode must be enabled");
   expect(fabric, ["agents", "enabled"], true, "Fabric agents must be enabled");
   expect(fabric, ["mesh", "enabled"], false, "Fabric mesh must be disabled");
